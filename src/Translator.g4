@@ -51,7 +51,7 @@ tipoparam : IN
           | OUT
           | INOUT ;
 
-decfun : FUNCTION IDENT '(' nomparamlist ')' tipo '::' IDENT ';' ;
+decfun : FUNCTION IDENT '(' nomparamlist ')' tipo '::' IDENT ';' dec_f_paramlist END FUNCTION IDENT;
 
 dec_f_paramlist : dec_f_paramlist_prime ;
 
@@ -108,11 +108,11 @@ OUT : 'OUT' ;
 INOUT : 'INOUT' ;
 CALL : 'CALL' ;
 
-STRING_CONST: ('\'' (~[\r\n])* '\'' | '"' (~[\r\n])* '"') {System.out.print(getText());};
-IDENT : [a-zA-Z] [a-zA-Z0-9_]* {System.out.print(getText());};
-NUM_REAL_CONST: '-'? ([0-9]+'.'[0-9]+ | [0-9]+ [eE] '-'? [0-9]+ | [0-9]+'.'[0-9]+[eE]'-'?[0-9]+) {System.out.print(getText());};
-NUM_INT_CONST: '-'? [0-9]+ {System.out.print(getText());};
-COMMENT: '!' ~[\r\n]* {System.out.print("//" + getText().substring(1));};
-LN : ('\r' | '\n' | '\r\n')+ {System.out.println("");};
-WS : [ \t\f]+ -> skip; //para no tener errores con espacios y tal
+STRING_CONST: ('\'' (~[\r\n])* '\'' | '"' (~[\r\n])* '"');
+IDENT : [a-zA-Z] [a-zA-Z0-9_]*;
+NUM_REAL_CONST: '-'? ([0-9]+'.'[0-9]+ | [0-9]+ [eE] '-'? [0-9]+ | [0-9]+'.'[0-9]+[eE]'-'?[0-9]+);
+NUM_INT_CONST: '-'? [0-9]+ ;
+COMMENT: '!' ~[\r\n]* -> skip;
+LN : ('\r' | '\n' | '\r\n')+ -> skip;
+WS : [ \t\f]+ -> skip;
 
