@@ -23,7 +23,10 @@ ctelist : ',' IDENT '=' simpvalue ctelist | ;
 
 simpvalue : NUM_INT_CONST
           | NUM_REAL_CONST
-          | STRING_CONST ;
+          | STRING_CONST
+          | NUM_INT_CONST_B
+          | NUM_INT_CONST_O
+          | NUM_INT_CONST_H ;
 
 tipo : INTEGER
      | REAL
@@ -92,6 +95,30 @@ fun_body : CALL IDENT subpparamlist ';' fun_body
 fun_body_prime : END FUNCTION IDENT
                | fun_body ;
 
+//PARTE OPCIONAL
+expcond : factorcond expcond_prime ;
+expcond_prime : oplog factorcond expcond_prime
+                | ;
+oplog: OR
+     | AND
+     | EQV
+     | NEQV ;
+
+
+//TODO: NO ES LL(1), la cab'(exp) tiene '(' así que hay que hacer transformaciones
+factorcond : exp opcomp exp
+           | '(' expcond ')'
+           | NOT factorcond
+           | TRUE
+           | FALSE ;
+
+opcomp : '<'
+       | '>'
+       | '<='
+       | '>='
+       | '=='
+       | '/=' ;
+
 
 PROGRAM   : 'PROGRAM' ;
 END       : 'END' ;
@@ -112,7 +139,21 @@ STRING_CONST: ('\'' (~[\r\n])* '\'' | '"' (~[\r\n])* '"');
 IDENT : [a-zA-Z] [a-zA-Z0-9_]*;
 NUM_REAL_CONST: '-'? ([0-9]+'.'[0-9]+ | [0-9]+ [eE] '-'? [0-9]+ | [0-9]+'.'[0-9]+[eE]'-'?[0-9]+);
 NUM_INT_CONST: '-'? [0-9]+ ;
+
+//PARTE OPCIONAL
+NUM_INT_CONST_B : 'b' '\'' [01]+ '\'';
+NUM_INT_CONST_O : 'o' '\'' [0-7]+ '\'' ;
+NUM_INT_CONST_H : 'z' '\'' [0-9a-fA-F]+ '\'' ;
+TRUE: '.TRUE.' ;
+FALSE: '.FALSE.' ;
+OR : '.OR.' ;
+AND : '.AND.' ;
+EQV : '.EQV.' ;
+NEQV : '.NEQV.' ;
+NOT : '.NOT.' ;
+
 COMMENT: '!' ~[\r\n]* -> skip;
 LN : ('\r' | '\n' | '\r\n')+ -> skip;
 WS : [ \t\f]+ -> skip;
+
 
