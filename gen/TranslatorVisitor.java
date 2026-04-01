@@ -249,4 +249,94 @@ public interface TranslatorVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitFun_body_prime(TranslatorParser.Fun_body_primeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#expcond}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpcond(TranslatorParser.ExpcondContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#expcond_prime}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpcond_prime(TranslatorParser.Expcond_primeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#oplog}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOplog(TranslatorParser.OplogContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#factorcond}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFactorcond(TranslatorParser.FactorcondContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#opcomp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOpcomp(TranslatorParser.OpcompContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#do_tail}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDo_tail(TranslatorParser.Do_tailContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#if_tail}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIf_tail(TranslatorParser.If_tailContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#if_tail_prime}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIf_tail_prime(TranslatorParser.If_tail_primeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#doval}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDoval(TranslatorParser.DovalContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#casos}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCasos(TranslatorParser.CasosContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#casos_prime}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCasos_prime(TranslatorParser.Casos_primeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#etiquetas}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEtiquetas(TranslatorParser.EtiquetasContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#etiquetas_tail}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEtiquetas_tail(TranslatorParser.Etiquetas_tailContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#etiquetas_tail_prime}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEtiquetas_tail_prime(TranslatorParser.Etiquetas_tail_primeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#listaetiqetas}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitListaetiqetas(TranslatorParser.ListaetiqetasContext ctx);
 }

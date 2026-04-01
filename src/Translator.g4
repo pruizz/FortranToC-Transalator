@@ -61,7 +61,10 @@ dec_f_paramlist : dec_f_paramlist_prime ;
 dec_f_paramlist_prime : tipo ',' INTENT '(' IN ')' IDENT ';' dec_f_paramlist_prime | ;
 
 sent : IDENT '=' exp ';'
-     | proc_call ';' ;
+     | proc_call ';'
+     | IF '(' expcond ')' if_tail
+     | DO do_tail
+     | SELECT CASE '(' exp ')' casos END SELECT ;
 
 exp : factor exp_prime ;
 
@@ -104,8 +107,6 @@ oplog: OR
      | EQV
      | NEQV ;
 
-
-//TODO: NO ES LL(1), la cab'(exp) tiene '(' así que hay que hacer transformaciones
 factorcond : exp opcomp exp
            | '(' expcond ')'
            | NOT factorcond
@@ -119,6 +120,37 @@ opcomp : '<'
        | '=='
        | '/=' ;
 
+// --- SENTENCIAS Y CONTROL DE FLUJO (LL1) ---
+
+do_tail : WHILE '(' expcond ')' sentlist ENDDO
+        | IDENT '=' doval ',' doval ',' doval sentlist ENDDO ;
+
+if_tail : sent
+        | THEN sentlist if_tail_prime ;
+
+if_tail_prime : ENDIF
+              | ELSE sentlist ENDIF ;
+
+doval : NUM_INT_CONST
+      | IDENT ;
+
+casos : CASE casos_prime
+      |  ;
+
+casos_prime : '(' etiquetas ')' sentlist casos
+            | DEFAULT sentlist ;
+
+etiquetas : simpvalue etiquetas_tail
+          | ':' simpvalue ;
+
+etiquetas_tail : listaetiqetas
+               | ':' etiquetas_tail_prime ;
+
+etiquetas_tail_prime : simpvalue
+                     |  ;
+
+listaetiqetas : ',' simpvalue listaetiqetas
+              | ;
 
 PROGRAM   : 'PROGRAM' ;
 END       : 'END' ;
@@ -135,15 +167,19 @@ OUT : 'OUT' ;
 INOUT : 'INOUT' ;
 CALL : 'CALL' ;
 
-STRING_CONST: ('\'' (~[\r\n])* '\'' | '"' (~[\r\n])* '"');
-IDENT : [a-zA-Z] [a-zA-Z0-9_]*;
-NUM_REAL_CONST: '-'? ([0-9]+'.'[0-9]+ | [0-9]+ [eE] '-'? [0-9]+ | [0-9]+'.'[0-9]+[eE]'-'?[0-9]+);
-NUM_INT_CONST: '-'? [0-9]+ ;
 
-//PARTE OPCIONAL
-NUM_INT_CONST_B : 'b' '\'' [01]+ '\'';
-NUM_INT_CONST_O : 'o' '\'' [0-7]+ '\'' ;
-NUM_INT_CONST_H : 'z' '\'' [0-9a-fA-F]+ '\'' ;
+IF : 'IF';
+DO : 'DO';
+SELECT : 'SELECT';
+CASE : 'CASE';
+WHILE : 'WHILE';
+ENDDO : 'ENDDO';
+THEN : 'THEN';
+ENDIF : 'ENDIF';
+ELSE: 'ELSE';
+DEFAULT: 'DEFAULT';
+
+
 TRUE: '.TRUE.' ;
 FALSE: '.FALSE.' ;
 OR : '.OR.' ;
@@ -152,8 +188,16 @@ EQV : '.EQV.' ;
 NEQV : '.NEQV.' ;
 NOT : '.NOT.' ;
 
+NUM_INT_CONST_B : 'b' '\'' [01]+ '\'';
+NUM_INT_CONST_O : 'o' '\'' [0-7]+ '\'' ;
+NUM_INT_CONST_H : 'z' '\'' [0-9a-fA-F]+ '\'' ;
+STRING_CONST: ('\'' (~[\r\n])* '\'' | '"' (~[\r\n])* '"');
+NUM_REAL_CONST: '-'? ([0-9]+'.'[0-9]+ | [0-9]+ [eE] '-'? [0-9]+ | [0-9]+'.'[0-9]+[eE]'-'?[0-9]+);
+NUM_INT_CONST: '-'? [0-9]+ ;
+
+
+IDENT : [a-zA-Z] [a-zA-Z0-9_]*;
+
 COMMENT: '!' ~[\r\n]* -> skip;
 LN : ('\r' | '\n' | '\r\n')+ -> skip;
 WS : [ \t\f]+ -> skip;
-
-

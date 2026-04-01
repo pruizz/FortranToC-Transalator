@@ -406,4 +406,154 @@ public interface TranslatorListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitFun_body_prime(TranslatorParser.Fun_body_primeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#expcond}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpcond(TranslatorParser.ExpcondContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#expcond}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpcond(TranslatorParser.ExpcondContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#expcond_prime}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpcond_prime(TranslatorParser.Expcond_primeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#expcond_prime}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpcond_prime(TranslatorParser.Expcond_primeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#oplog}.
+	 * @param ctx the parse tree
+	 */
+	void enterOplog(TranslatorParser.OplogContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#oplog}.
+	 * @param ctx the parse tree
+	 */
+	void exitOplog(TranslatorParser.OplogContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#factorcond}.
+	 * @param ctx the parse tree
+	 */
+	void enterFactorcond(TranslatorParser.FactorcondContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#factorcond}.
+	 * @param ctx the parse tree
+	 */
+	void exitFactorcond(TranslatorParser.FactorcondContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#opcomp}.
+	 * @param ctx the parse tree
+	 */
+	void enterOpcomp(TranslatorParser.OpcompContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#opcomp}.
+	 * @param ctx the parse tree
+	 */
+	void exitOpcomp(TranslatorParser.OpcompContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#do_tail}.
+	 * @param ctx the parse tree
+	 */
+	void enterDo_tail(TranslatorParser.Do_tailContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#do_tail}.
+	 * @param ctx the parse tree
+	 */
+	void exitDo_tail(TranslatorParser.Do_tailContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#if_tail}.
+	 * @param ctx the parse tree
+	 */
+	void enterIf_tail(TranslatorParser.If_tailContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#if_tail}.
+	 * @param ctx the parse tree
+	 */
+	void exitIf_tail(TranslatorParser.If_tailContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#if_tail_prime}.
+	 * @param ctx the parse tree
+	 */
+	void enterIf_tail_prime(TranslatorParser.If_tail_primeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#if_tail_prime}.
+	 * @param ctx the parse tree
+	 */
+	void exitIf_tail_prime(TranslatorParser.If_tail_primeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#doval}.
+	 * @param ctx the parse tree
+	 */
+	void enterDoval(TranslatorParser.DovalContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#doval}.
+	 * @param ctx the parse tree
+	 */
+	void exitDoval(TranslatorParser.DovalContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#casos}.
+	 * @param ctx the parse tree
+	 */
+	void enterCasos(TranslatorParser.CasosContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#casos}.
+	 * @param ctx the parse tree
+	 */
+	void exitCasos(TranslatorParser.CasosContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#casos_prime}.
+	 * @param ctx the parse tree
+	 */
+	void enterCasos_prime(TranslatorParser.Casos_primeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#casos_prime}.
+	 * @param ctx the parse tree
+	 */
+	void exitCasos_prime(TranslatorParser.Casos_primeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#etiquetas}.
+	 * @param ctx the parse tree
+	 */
+	void enterEtiquetas(TranslatorParser.EtiquetasContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#etiquetas}.
+	 * @param ctx the parse tree
+	 */
+	void exitEtiquetas(TranslatorParser.EtiquetasContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#etiquetas_tail}.
+	 * @param ctx the parse tree
+	 */
+	void enterEtiquetas_tail(TranslatorParser.Etiquetas_tailContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#etiquetas_tail}.
+	 * @param ctx the parse tree
+	 */
+	void exitEtiquetas_tail(TranslatorParser.Etiquetas_tailContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#etiquetas_tail_prime}.
+	 * @param ctx the parse tree
+	 */
+	void enterEtiquetas_tail_prime(TranslatorParser.Etiquetas_tail_primeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#etiquetas_tail_prime}.
+	 * @param ctx the parse tree
+	 */
+	void exitEtiquetas_tail_prime(TranslatorParser.Etiquetas_tail_primeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#listaetiqetas}.
+	 * @param ctx the parse tree
+	 */
+	void enterListaetiqetas(TranslatorParser.ListaetiqetasContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#listaetiqetas}.
+	 * @param ctx the parse tree
+	 */
+	void exitListaetiqetas(TranslatorParser.ListaetiqetasContext ctx);
 }
