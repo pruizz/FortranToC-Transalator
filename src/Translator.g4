@@ -1,8 +1,12 @@
 grammar Translator;
 
+@header {
+import java.util.ArrayList;
+}
+
 prg : PROGRAM IDENT ';' dcllist cabecera sentlist END PROGRAM IDENT subproglist ;
 
-dcllist : dcl dcllist | ;
+dcllist[List<VariableC> vars, List<ConstanteC> consts] : dcl[$vars,$consts] dcllist[$vars, $consts] | ;
 
 cabecera : INTERFACE cablist END INTERFACE | ;
 
@@ -14,51 +18,118 @@ sentlist : sent sentlist_prime ;
 
 sentlist_prime : sent sentlist_prime |  ;
 
-dcl : tipo dcl_varcte ;
+dcl[List<VariableC> vars, List<ConstanteC> consts] : t=tipo dcl_varcte[$t.t, $vars, $consts] ;
 
-dcl_varcte : ',' PARAMETER '::' IDENT '=' simpvalue ctelist ';'
-           | '::' varlist ';' ;
+dcl_varcte[String tipoBase, List<VariableC> vars, List<ConstanteC> consts] : ',' PARAMETER '::' id=IDENT '=' v=simpvalue
+    {
+        $consts.add(new ConstanteC($tipoBase, $id.text, $v.val));
+    }ctelist[$tipoBase, $consts] ';'
+           | '::' varlist[$tipoBase, $vars] ';' ;
 
-ctelist : ',' IDENT '=' simpvalue ctelist | ;
+ctelist [String tipoBase, List<ConstanteC> consts]
+    : ',' id=IDENT '=' v=simpvalue
+      {
+          $consts.add(new ConstanteC($tipoBase, $id.text, $v.val));
+      }
+      ctelist[$tipoBase, $consts]
+    |
+    ;
+simpvalue returns [String val]
+    : NUM_INT_CONST   { $val = $NUM_INT_CONST.text; }
+    | NUM_REAL_CONST  { $val = $NUM_REAL_CONST.text; }
+    | STRING_CONST    { $val = $STRING_CONST.text; }
+    | NUM_INT_CONST_B { $val = $NUM_INT_CONST_B.text; }
+    | NUM_INT_CONST_O { $val = $NUM_INT_CONST_O.text; }
+    | NUM_INT_CONST_H { $val = $NUM_INT_CONST_H.text; };
 
-simpvalue : NUM_INT_CONST
-          | NUM_REAL_CONST
-          | STRING_CONST
-          | NUM_INT_CONST_B
-          | NUM_INT_CONST_O
-          | NUM_INT_CONST_H ;
-
-tipo : INTEGER
-     | REAL
-     | CHARACTER charlength ;
+tipo returns [String t]
+          : INTEGER   { $t = "int"; }
+          | REAL      { $t = "float"; }
+          | CHARACTER charlength { $t = "char"; }
+          ;
 
 charlength : '(' NUM_INT_CONST ')'| ;
 
-varlist : IDENT init varlist_prime ;
+varlist [String tipoBase, List<VariableC> vars]
+    : id=IDENT i=init
+      {
+          $vars.add(new VariableC($tipoBase, $id.text, $i.val));
+      }
+      varlist_prime[$tipoBase, $vars]
+    ;
 
-varlist_prime : ',' IDENT init varlist_prime | ;
+varlist_prime [String tipoBase, List<VariableC> vars]
+    : ',' id=IDENT i=init
+      {
+          $vars.add(new VariableC($tipoBase, $id.text, $i.val));
+      }
+      varlist_prime[$tipoBase, $vars]
+    |
+    ;
 
-init : '=' simpvalue | ;
+init returns [String val]
+    : '=' v=simpvalue { $val = $v.val; }
+    | { $val = ""; }
+    ;
 
-decproc : SUBROUTINE IDENT formal_paramlist dec_s_paramlist END SUBROUTINE IDENT ;
+decproc returns [SubprogramaC sub]
+    : SUBROUTINE id1=IDENT
+      {
+          $sub = new SubprogramaC($id1.text, "void");
+      }
+      formal_paramlist[$sub]
+      dec_s_paramlist[$sub]
+      END SUBROUTINE id2=IDENT
+    ;
 
-formal_paramlist : '(' nomparamlist ')' | ;
+formal_paramlist [SubprogramaC sub] : '(' nomparamlist[$sub] ')'  | ;
 
-nomparamlist : IDENT nomparamlist_prime ;
+nomparamlist [SubprogramaC sub]: id=IDENT{$sub.parametros.add(new ParametroC("", $id.text, ""));} nomparamlist_prime[$sub];
 
-nomparamlist_prime : ',' nomparamlist | ;
+nomparamlist_prime[SubprogramaC sub] : ',' id=IDENT{$sub.parametros.add(new ParametroC("", $id.text, ""));} nomparamlist_prime[$sub] | ;
 
-dec_s_paramlist : tipo ',' INTENT '(' tipoparam ')' IDENT ';' dec_s_paramlist | ;
+dec_s_paramlist [SubprogramaC sub]
+    : t=tipo ',' INTENT '(' m=tipoparam ')' id=IDENT ';'
+      {
+        boolean correcto = $sub.actualizarParametro($id.text, $t.t, $m.m);
+        if (!correcto) {
+            System.err.println("Error Semántico: El parámetro '" + $id.text +  "' no coincide con el orden/nombre de la cabecera.");
+        }
+      }
+      dec_s_paramlist[$sub]
+    | ;
 
-tipoparam : IN
-          | OUT
-          | INOUT ;
+tipoparam returns [String m]
+          : IN    { $m = "IN"; }
+          | OUT   { $m = "OUT"; }
+          | INOUT { $m = "INOUT"; }
+          ;
 
-decfun : FUNCTION IDENT '(' nomparamlist ')' tipo '::' IDENT ';' dec_f_paramlist END FUNCTION IDENT;
+decfun returns[SubprogramaC fun] : FUNCTION id1=IDENT
+    {
+        $fun = new SubprogramaC($id1.text, "");
 
-dec_f_paramlist : dec_f_paramlist_prime ;
+    }'(' nomparamlist[$fun] ')' t=tipo  '::' id_ret=IDENT
+    {
+        $fun.setTipoRetorno($t.t);
+        if (!$id1.text.equals($id_ret.text)) {
+            System.err.println("Error: El nombre de retorno no coincide con la función.");
+        }
 
-dec_f_paramlist_prime : tipo ',' INTENT '(' IN ')' IDENT ';' dec_f_paramlist_prime | ;
+    }';' dec_f_paramlist[$fun] END FUNCTION IDENT;
+
+dec_f_paramlist[SubprogramaC fun] : dec_f_paramlist_prime[$fun] ;
+
+dec_f_paramlist_prime[SubprogramaC fun] :
+    t=tipo ',' INTENT '(' IN ')' id=IDENT ';'
+    {
+        boolean correcto = $fun.actualizarParametro($id.text, $t.t, "IN");
+        if (!correcto) {
+            System.err.println("Error Semántico: El parámetro '" + $id.text +  "' no coincide con la cabecera.");
+        }
+    }
+    dec_f_paramlist_prime[$fun] //Se ha quitado el renonbrado de dec_f_paramlist
+    | ;
 
 sent : IDENT '=' exp ';'
      | proc_call ';'
@@ -88,15 +159,43 @@ subpparamlist : '(' exp explist ')' | ;
 
 subproglist : codproc subproglist | codfun subproglist | ;
 
-codproc : SUBROUTINE IDENT formal_paramlist dec_s_paramlist dcllist sentlist END SUBROUTINE IDENT ;
+codproc returns [SubprogramaC sub]
+    : SUBROUTINE id1=IDENT
+      {
+          $sub = new SubprogramaC($id1.text, "void");
+      }
+      formal_paramlist[$sub]   // HEREDADO
+      dec_s_paramlist[$sub]
+      dcllist[$sub.getVariables(), new ArrayList<ConstanteC>()]
+      sentlist
+      END SUBROUTINE id2=IDENT
+    ;
 
-codfun : FUNCTION IDENT '(' nomparamlist ')' tipo '::' IDENT ';' dec_f_paramlist dcllist fun_body ;
+codfun returns[SubprogramaC fun]  : FUNCTION id1=IDENT
+    {
+        $fun = new SubprogramaC($id1.text,"");
 
-fun_body : CALL IDENT subpparamlist ';' fun_body
-         | IDENT '=' exp ';' fun_body_prime ;
+    }'(' nomparamlist[$fun] ')' t=tipo '::' id_ret=IDENT
+    {
+      $fun.setTipoRetorno($t.t);
+       if (!$id1.text.equals($id_ret.text)) {
+        System.err.println("Error: El nombre de retorno no coincide con la función.");
+       }
 
-fun_body_prime : END FUNCTION IDENT
-               | fun_body ;
+    }';' dec_f_paramlist[$fun] dcllist[$fun.getVariables(), new ArrayList<ConstanteC>()] fun_body[$fun] ;
+
+fun_body[SubprogramaC fun] : CALL IDENT subpparamlist ';' fun_body[$fun]
+         | IDENT '=' exp ';' fun_body_prime[$fun] ;
+
+fun_body_prime[SubprogramaC fun] : END FUNCTION id2=IDENT
+     {
+        // Comprobamos usando el nombre que guardamos al principio en el objeto
+        if (!$fun.getNombre().equals($id2.text)) {
+            System.err.println("Error Semántico: El nombre del END FUNCTION no coincide.");
+        }
+
+     }
+     | fun_body[$fun] ;
 
 //PARTE OPCIONAL
 expcond : factorcond expcond_prime ;

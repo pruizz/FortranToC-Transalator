@@ -1,5 +1,8 @@
 // Generated from /Users/zskyh/university/third-year/second-term/procesadores/FortranToCTranslator/src/Translator.g4 by ANTLR 4.13.2
 
+import java.util.ArrayList;
+
+
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -280,18 +283,6 @@ public class TranslatorBaseListener implements TranslatorListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterDecfun(TranslatorParser.DecfunContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitDecfun(TranslatorParser.DecfunContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterDec_f_paramlist(TranslatorParser.Dec_f_paramlistContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -455,18 +446,6 @@ public class TranslatorBaseListener implements TranslatorListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitCodproc(TranslatorParser.CodprocContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterCodfun(TranslatorParser.CodfunContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitCodfun(TranslatorParser.CodfunContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

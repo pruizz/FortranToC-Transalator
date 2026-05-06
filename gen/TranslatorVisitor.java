@@ -1,4 +1,7 @@
 // Generated from /Users/zskyh/university/third-year/second-term/procesadores/FortranToCTranslator/src/Translator.g4 by ANTLR 4.13.2
+
+import java.util.ArrayList;
+
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 /**
@@ -142,12 +145,6 @@ public interface TranslatorVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTipoparam(TranslatorParser.TipoparamContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link TranslatorParser#decfun}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDecfun(TranslatorParser.DecfunContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link TranslatorParser#dec_f_paramlist}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -231,12 +228,6 @@ public interface TranslatorVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitCodproc(TranslatorParser.CodprocContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link TranslatorParser#codfun}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCodfun(TranslatorParser.CodfunContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link TranslatorParser#fun_body}.
 	 * @param ctx the parse tree
