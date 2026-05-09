@@ -14,9 +14,21 @@ cablist : decproc decsubprog | decfun decsubprog ;
 
 decsubprog : decproc decsubprog | decfun decsubprog | ;
 
-sentlist : sent sentlist_prime ;
+sentlist[List<SentenciaC> sents]
+    : s=sent
+            {   if($s.sentVal != null){
+                    $sents.add($s.sentVal);
+                }
+            }
+     sentlist_prime[$sents] ;
 
-sentlist_prime : sent sentlist_prime |  ;
+sentlist_prime[List<SentenciaC> sents]
+    : s=sent
+        {   if($s.sentVal != null){
+                $sents.add($s.sentVal);
+            }
+        }
+        sentlist_prime[$sents] |  ;
 
 dcl[List<VariableC> vars, List<ConstanteC> consts] : t=tipo dcl_varcte[$t.t, $vars, $consts] ;
 
@@ -131,31 +143,52 @@ dec_f_paramlist_prime[SubprogramaC fun] :
     dec_f_paramlist_prime[$fun] //Se ha quitado el renonbrado de dec_f_paramlist
     | ;
 
-sent : IDENT '=' exp ';'
-     | proc_call ';'
-     | IF '(' expcond ')' if_tail
-     | DO do_tail
-     | SELECT CASE '(' exp ')' casos END SELECT ;
+sent returns [SentenciaC sentVal]
+    : id=IDENT '=' e=exp ';' {$sentVal = new AsignacionC($id.text,$e.val); }
+    | pc=proc_call ';' {$sentVal = $pc.procCallVal ; }
+    | IF '(' expcond ')' if_tail
+    | DO do_tail
+    | SELECT CASE '(' exp ')' casos END SELECT ;
 
-exp : factor exp_prime ;
+exp returns [String val] : f=factor ep=exp_prime[$f.val] { $val = $ep.valSin; } ;
 
-exp_prime : op factor exp_prime | ;
+//Ahora para todos estos casos de Strings que no se van a guardar en variables java si hay que tener tanto heredados
+//para ir rellenando los valores hacia abajo y luego devlver el sintetizado para luego cogerlo hacia arriba relleno
+//ya que en esre caso no estamos teniendo la referencia a ningun objeto por simplificacion y no crear mas clases.
+exp_prime[String valHeredado ] returns [String valSin]:
+    o=op f=factor ep=exp_prime[$valHeredado + " " + $o.val + " " + $f.val] { $valSin = $ep.valSin; }
+    | { $valSin = $valHeredado; };
 
-op : oparit ;
+op returns [String val]
+    : oparit { $val = $oparit.text; }
+    ;
 
 oparit : '+' | '-' | '*' | '/' ;
 
-factor : simpvalue
-       | '(' exp ')'
-       | IDENT factor_prime ;
+factor returns [String val]
+       : s=simpvalue       { $val = $s.val; }
+       | '(' e=exp ')'     { $val = "(" + $e.val + ")"; }
+       | id=IDENT fp=factor_prime[$id.text] { $val = $fp.val; }
+       ;
 
-factor_prime : '(' exp explist ')' | ;
+factor_prime [String valHeredado] returns [String val]
+    : '(' e=exp el=explist[$e.val] ')' { $val = $valHeredado + "(" + $el.val + ")"; }
+    | { $val = $valHeredado ; }
+    ;
 
-explist : ',' exp explist | ;
+explist [String valHeredado] returns [String val]
+    : ',' e=exp el=explist[$valHeredado + ", " + $e.val] { $val = $el.val; }
+    | { $val = $valHeredado; }
+    ;
 
-proc_call : CALL IDENT subpparamlist ;
+proc_call returns [LlamadaC procCallVal]: CALL id=IDENT sp=subpparamlist {$procCallVal = new LlamadaC($id.text, $sp.args);};
 
-subpparamlist : '(' exp explist ')' | ;
+subpparamlist returns[String args]
+    : '(' e=exp ep=explist[$e.val] ')'
+        {
+           $args = $ep.val ;
+        }
+    | {$args = "" ; } ;
 
 subproglist : codproc subproglist | codfun subproglist | ;
 
@@ -167,7 +200,7 @@ codproc returns [SubprogramaC sub]
       formal_paramlist[$sub]   // HEREDADO
       dec_s_paramlist[$sub]
       dcllist[$sub.getVariables(), new ArrayList<ConstanteC>()]
-      sentlist
+      sentlist[$sub.getSentencias()]
       END SUBROUTINE id2=IDENT
     ;
 
@@ -184,8 +217,11 @@ codfun returns[SubprogramaC fun]  : FUNCTION id1=IDENT
 
     }';' dec_f_paramlist[$fun] dcllist[$fun.getVariables(), new ArrayList<ConstanteC>()] fun_body[$fun] ;
 
-fun_body[SubprogramaC fun] : CALL IDENT subpparamlist ';' fun_body[$fun]
-         | IDENT '=' exp ';' fun_body_prime[$fun] ;
+fun_body[SubprogramaC fun]
+    : CALL id=IDENT sp=subpparamlist ';'
+    { $fun.getSentencias().add(new LlamadaC($id.text, $sp.args)); } fun_body[$fun]
+    | id=IDENT '=' e=exp ';'
+    { $fun.getSentencias().add(new AsignacionC($id.text, $e.val)); } fun_body_prime[$fun] ;
 
 fun_body_prime[SubprogramaC fun] : END FUNCTION id2=IDENT
      {
@@ -198,26 +234,38 @@ fun_body_prime[SubprogramaC fun] : END FUNCTION id2=IDENT
      | fun_body[$fun] ;
 
 //PARTE OPCIONAL
-expcond : factorcond expcond_prime ;
-expcond_prime : oplog factorcond expcond_prime
-                | ;
-oplog: OR
-     | AND
-     | EQV
-     | NEQV ;
+expcond returns [String val]
+    : fc=factorcond ecp=expcond_prime[$fc.val] { $val = $ecp.val; } ;
 
-factorcond : exp opcomp exp
-           | '(' expcond ')'
-           | NOT factorcond
-           | TRUE
-           | FALSE ;
+expcond_prime [String valHeredado] returns [String val]
+    : o=oplog fc=factorcond ecp=expcond_prime[$valHeredado + " " + $o.val + " " + $fc.val]
+      { $val = $ecp.val; }
+    | { $val = $valHeredado; }
+    ;
 
-opcomp : '<'
-       | '>'
-       | '<='
-       | '>='
-       | '=='
-       | '/=' ;
+oplog returns [String val]
+     : OR   { $val = "||"; }
+     | AND  { $val = "&&"; }
+     | EQV  { $val = "=="; }
+     | NEQV { $val = "!="; }
+     ;
+
+factorcond returns [String val]
+           : e1=exp oc=opcomp e2=exp { $val = $e1.val + " " + $oc.val + " " + $e2.val; }
+           | '(' ec=expcond ')'      { $val = "(" + $ec.val + ")"; }
+           | NOT fc=factorcond       { $val = "!" + $fc.val; }
+           | TRUE                    { $val = "1"; }
+           | FALSE                   { $val = "0"; }
+           ;
+
+opcomp returns [String val]
+       : '<'  { $val = "<"; }
+       | '>'  { $val = ">"; }
+       | '<=' { $val = "<="; }
+       | '>=' { $val = ">="; }
+       | '==' { $val = "=="; }
+       | '/=' { $val = "!="; }
+       ;
 
 // --- SENTENCIAS Y CONTROL DE FLUJO (LL1) ---
 
