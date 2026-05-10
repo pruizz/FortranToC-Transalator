@@ -2,6 +2,7 @@ grammar Translator;
 
 @header {
 import java.util.ArrayList;
+import java.util.List;
 }
 
 prg : PROGRAM IDENT ';' dcllist cabecera sentlist END PROGRAM IDENT subproglist ;
@@ -146,9 +147,10 @@ dec_f_paramlist_prime[SubprogramaC fun] :
 sent returns [SentenciaC sentVal]
     : id=IDENT '=' e=exp ';' {$sentVal = new AsignacionC($id.text,$e.val); }
     | pc=proc_call ';' {$sentVal = $pc.procCallVal ; }
-    | IF '(' expcond ')' if_tail
-    | DO do_tail
-    | SELECT CASE '(' exp ')' casos END SELECT ;
+    | IF '(' ec=expcond ')' it=if_tail[$ec.val]   { $sentVal = $it.ifObj; }
+    | DO dt=do_tail { $sentVal = $dt.doObj; }
+    | SELECT CASE '(' e=exp ')' c=casos END SELECT { $sentVal = new SelectCaseC($e.val, $c.listaCasos, $c.listaDefault); }
+    ;
 
 exp returns [String val] : f=factor ep=exp_prime[$f.val] { $val = $ep.valSin; } ;
 
@@ -269,35 +271,101 @@ opcomp returns [String val]
 
 // --- SENTENCIAS Y CONTROL DE FLUJO (LL1) ---
 
-do_tail : WHILE '(' expcond ')' sentlist ENDDO
-        | IDENT '=' doval ',' doval ',' doval sentlist ENDDO ;
+do_tail returns [SentenciaC doObj, List<SentenciaC> sents]
+    //CASO DEL WHILE
+    : WHILE '(' ec=expcond ')' { $sents = new ArrayList<>(); } sentlist[$sents] ENDDO
+      {
+          $doObj = new BucleWhileC($ec.val, $sents);
+      }
+    // CASO DO --> FOR EN C
+    | id=IDENT '=' d1=doval ',' d2=doval ',' d3=doval { $sents = new ArrayList<>(); } sentlist[$sents] ENDDO
+      {
+          $doObj = new BucleForC($id.text, $d1.val, $d2.val, $d3.val, $sents);
+      }
+    ;
 
-if_tail : sent
-        | THEN sentlist if_tail_prime ;
+if_tail [String cond] returns [IfC ifObj, List<SentenciaC> sIf]
+    : s=sent
+    {
+        $sIf = new ArrayList<>();
+        if ($s.sentVal != null) $sIf.add($s.sentVal);
+        $ifObj = new IfC($cond, $sIf, new ArrayList<>());
+    }
+    | THEN { $sIf = new ArrayList<>(); } sentlist[$sIf] itp=if_tail_prime
+        {
+          $ifObj = new IfC($cond, $sIf, $itp.sElse);
+        }
+    ;
 
-if_tail_prime : ENDIF
-              | ELSE sentlist ENDIF ;
+if_tail_prime returns [List<SentenciaC> sElse]
+    : ENDIF
+      {
+          $sElse = new ArrayList<>();
+      }
+    | ELSE { $sElse = new ArrayList<>(); } sentlist[$sElse] ENDIF
+    ;
 
-doval : NUM_INT_CONST
-      | IDENT ;
+doval returns [String val]
+    : nic=NUM_INT_CONST {$val = $nic.text; }
+    | id=IDENT {$val = $id.text; }
+    ;
 
-casos : CASE casos_prime
-      |  ;
+casos returns [List<CasoC> listaCasos, List<SentenciaC> listaDefault]
+    : CASE cp=casos_prime
+      {
+          $listaCasos = $cp.listaCasos;
+          $listaDefault = $cp.listaDefault;
+      }
+    | {
+          $listaCasos = new ArrayList<>();
+          $listaDefault = new ArrayList<>();
+      }
+    ;
 
-casos_prime : '(' etiquetas ')' sentlist casos
-            | DEFAULT sentlist ;
+casos_prime returns [List<CasoC> listaCasos, List<SentenciaC> listaDefault]
+    : '(' e=etiquetas ')' { List<SentenciaC> sents = new ArrayList<>(); } sentlist[sents] c=casos
+      {
+          $listaCasos = new ArrayList<>();
+          $listaCasos.add(new CasoC($e.val, sents));
+          $listaCasos.addAll($c.listaCasos); // Añadimos los casos siguientes
+          $listaDefault = $c.listaDefault;   // Arrastramos el default si lo hay
+      }
+    | DEFAULT { List<SentenciaC> sentsDef = new ArrayList<>(); } sentlist[sentsDef]
+      {
+          $listaCasos = new ArrayList<>();
+          $listaDefault = sentsDef;
+      }
+    ;
 
-etiquetas : simpvalue etiquetas_tail
-          | ':' simpvalue ;
+etiquetas returns [String val]
+    : s=simpvalue et=etiquetas_tail[$s.val] { $val = $et.val; }
+    | ':' s=simpvalue { $val = "case < " + $s.val + ":"; }
+    ;
 
-etiquetas_tail : listaetiqetas
-               | ':' etiquetas_tail_prime ;
+etiquetas_tail [String sHeredado] returns [String val]
+    //Lista con comas
+    : le=listaetiqetas[$sHeredado] { $val = $le.val; }
+    // Rango con puntos
+    | ':' etp=etiquetas_tail_prime
+      {
+          if ($etp.val.isEmpty()) {
+              $val = "case > " + $sHeredado + ":";
+          } else {
+              $val = "case " + $sHeredado + " to " + $etp.val + ":";
+          }
+      }
+    ;
 
-etiquetas_tail_prime : simpvalue
-                     |  ;
+etiquetas_tail_prime returns [String val]
+    : s=simpvalue { $val = $s.val; }
+    | { $val = ""; }
+    ;
 
-listaetiqetas : ',' simpvalue listaetiqetas
-              | ;
+listaetiqetas [String sHeredado] returns [String val]
+    : ',' s=simpvalue le=listaetiqetas[ $sHeredado + ":\ncase " + $s.val ]
+      { $val = $le.val; }
+    |  { $val = "case " + $sHeredado + ":"; }
+    ;
 
 PROGRAM   : 'PROGRAM' ;
 END       : 'END' ;
