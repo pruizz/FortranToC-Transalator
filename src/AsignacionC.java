@@ -1,14 +1,40 @@
 public class AsignacionC extends SentenciaC {
-    public String identificador;
-    public String expresionTraducida;
+    private String variable, valor;
+    private boolean esReturn = false;
 
-    public AsignacionC(String id, String exp) {
-        this.identificador = id;
-        this.expresionTraducida = exp;
+    public AsignacionC(String variable, String valor) {
+        this.variable = variable; this.valor = valor;
     }
 
     @Override
     public String generarCodigo(int nivel) {
-        return "";
+        if (esReturn) {
+            return tab(nivel) + "return " + valor + ";";
+        }
+        return tab(nivel) + variable + " = " + valor + ";";
+    }
+
+    public String getVariable() {
+        return variable;
+    }
+
+    public void setVariable(String variable) {
+        this.variable = variable;
+    }
+
+    public boolean isEsReturn() {
+        return esReturn;
+    }
+
+    public void setEsReturn(boolean esReturn) {
+        this.esReturn = esReturn;
+    }
+
+    public String getValor() {
+        return valor;
+    }
+
+    public void setValor(String valor) {
+        this.valor = valor;
     }
 }

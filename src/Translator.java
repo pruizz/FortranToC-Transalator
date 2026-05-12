@@ -1,5 +1,6 @@
 import org.antlr.v4.runtime.*;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 public class Translator {
     public static void main(String[] args) {
@@ -9,8 +10,10 @@ public class Translator {
             return;
         }
 
+        String archivoEntrada = args[0];
+
         try {
-            CharStream input = CharStreams.fromFileName(args[0]);
+            CharStream input = CharStreams.fromFileName(archivoEntrada);
             TranslatorLexer analex = new TranslatorLexer(input);
 
             ManejadorErrores manejador = new ManejadorErrores();
@@ -23,7 +26,22 @@ public class Translator {
             anasint.removeErrorListeners();
             anasint.addErrorListener(manejador);
 
-            anasint.prg();
+            // Ejecutamos la regla prg y guardamos el código C que nos devuelve
+            String codigoGenerado = anasint.prg().codigoC;
+
+            // Si el código no es nulo (es decir, si no hubo errores que pararan la traducción)
+            if (codigoGenerado != null) {
+                // Cambiamos la extensión de .for a .c (ignorando mayúsculas/minúsculas)
+                String archivoSalida = archivoEntrada.replaceAll("(?i)\\.for$", ".c");
+
+                // Creamos y escribimos el archivo
+                try (PrintWriter out = new PrintWriter(archivoSalida)) {
+                    out.print(codigoGenerado);
+                }
+
+                System.out.println("✅ Traducción completada con éxito.");
+                System.out.println("Archivo generado: " + archivoSalida);
+            }
 
         } catch (IOException e) {
             System.err.println("IO Error: " + e.getMessage());

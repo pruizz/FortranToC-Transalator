@@ -1,16 +1,30 @@
-import java.util.List;
-
 public class LlamadaC extends SentenciaC {
-    public String nombreProcedimiento;
-    public String argumentos;  //Vienen todos los argumentos en un string largo;
+    private String nombre;
+    private String argumentos;
 
-    public LlamadaC(String nombre, String args) {
-        this.nombreProcedimiento = nombre;
-        this.argumentos = args;
+    public LlamadaC(String nombre, String argumentos) {
+        this.nombre = nombre;
+        this.argumentos = (argumentos == null) ? "" : argumentos;
     }
 
     @Override
     public String generarCodigo(int nivel) {
-        return "";
+        return ComponenteC.tab(nivel) + nombre + "(" + argumentos + ");";
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public String getArgumentos() {
+        return argumentos;
+    }
+
+    public void setArgumentos(String argumentos) {
+        this.argumentos = argumentos;
     }
 }

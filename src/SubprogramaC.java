@@ -1,27 +1,35 @@
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
-public class SubprogramaC extends ComponenteC{
-
-    private String nombre;
-    private String tipoRetorno; // "void" si es SUBROUTINE, otro si es FUNCTION
+public class SubprogramaC extends ComponenteC {
+    private String nombre, tipoRetorno;
     private List<ParametroC> parametros = new ArrayList<>();
     private List<VariableC> variables = new ArrayList<>();
     private List<SentenciaC> sentencias = new ArrayList<>();
-    private int parametrosProcesados = 0;
 
     public SubprogramaC(String nombre, String tipoRetorno) {
-        this.nombre = nombre;
-        this.tipoRetorno = tipoRetorno;
+        this.nombre = nombre; this.tipoRetorno = tipoRetorno;
     }
 
-    public String generarCabecera() {
+    // Lógica para cabeceras y parámetros del PDF
+    public boolean actualizarParametro(String nombreParam, String tipo, String modo) {
+        for (ParametroC p : parametros) {
+            if (p.getNombre().equals(nombreParam)) {
+                p.setTipo(tipo);
+                p.setModo(modo);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String generarCodigoCabecera() {
         StringBuilder sb = new StringBuilder();
-        sb.append(tipoRetorno).append(" ").append(nombre).append(" (");
+        String t = (tipoRetorno == null || tipoRetorno.isEmpty()) ? "void" : tipoRetorno;
+        sb.append(t).append(" ").append(nombre).append("(");
 
         if (parametros.isEmpty()) {
-            sb.append("void");
+            sb.append("void"); // [cite: 210, 228]
         } else {
             for (int i = 0; i < parametros.size(); i++) {
                 sb.append(parametros.get(i).generarCodigo(0));
@@ -35,36 +43,24 @@ public class SubprogramaC extends ComponenteC{
     @Override
     public String generarCodigo(int nivel) {
         StringBuilder sb = new StringBuilder();
-        sb.append(tab(nivel)).append(generarCabecera()).append(" {\n");
+        sb.append(tab(nivel)).append(generarCodigoCabecera()).append(" {\n");
 
         for (VariableC v : variables) {
             sb.append(v.generarCodigo(nivel + 1)).append("\n");
         }
+
         for (SentenciaC s : sentencias) {
-            s.setNombreFuncionPadre(this.nombre);
+            if (s instanceof AsignacionC) {
+                AsignacionC asig = (AsignacionC) s;
+                if (asig.getVariable().equalsIgnoreCase(this.nombre)) {
+                    asig.setEsReturn(true);
+                }
+            }
             sb.append(s.generarCodigo(nivel + 1)).append("\n");
         }
 
         sb.append(tab(nivel)).append("}");
         return sb.toString();
-    }
-
-    public boolean actualizarParametro(String nombre, String tipo, String modo) {
-        if (parametrosProcesados >= parametros.size()) {
-            return false;
-        }
-        ParametroC p = parametros.get(parametrosProcesados);
-
-        if (!p.nombre.equals(nombre)) {
-            return false;
-        }
-        p.tipo = tipo;
-        p.modo = modo;
-        parametrosProcesados++;
-        return true;
-    }
-    public boolean comprobacionFinalParametros() {
-        return parametrosProcesados == parametros.size();
     }
 
     public String getNombre() {
@@ -83,14 +79,6 @@ public class SubprogramaC extends ComponenteC{
         this.tipoRetorno = tipoRetorno;
     }
 
-    public List<SentenciaC> getSentencias() {
-        return sentencias;
-    }
-
-    public void setSentencias(List<SentenciaC> sentencias) {
-        this.sentencias = sentencias;
-    }
-
     public List<ParametroC> getParametros() {
         return parametros;
     }
@@ -107,13 +95,11 @@ public class SubprogramaC extends ComponenteC{
         this.variables = variables;
     }
 
-    public int getParametrosProcesados() {
-        return parametrosProcesados;
+    public List<SentenciaC> getSentencias() {
+        return sentencias;
     }
 
-    public void setParametrosProcesados(int parametrosProcesados) {
-        this.parametrosProcesados = parametrosProcesados;
+    public void setSentencias(List<SentenciaC> sentencias) {
+        this.sentencias = sentencias;
     }
 }
-
-

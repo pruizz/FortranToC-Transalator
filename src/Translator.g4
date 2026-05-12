@@ -5,15 +5,37 @@ import java.util.ArrayList;
 import java.util.List;
 }
 
-prg : PROGRAM IDENT ';' dcllist cabecera sentlist END PROGRAM IDENT subproglist ;
+//Fase inicial creamos el programa completo y vamos pasando hacia abajo los atributos que guardaran el resto
+prg returns [String codigoC]
+    @init { ProgramaC programa = new ProgramaC(); }
+    : PROGRAM id1=IDENT ';'
+    dcllist[programa.getVariablesMain(), programa.getConstantes()]
+    cabecera[programa.getInterfaces()]
+    sentlist[programa.getSentenciasMain()]
+    END PROGRAM id2=IDENT subproglist[programa.getImplementaciones()]
+    {
+        if (!$id1.text.equals($id2.text)) {
+            notifyErrorListeners($id2, "Error Semántico: El nombre del PROGRAM no coincide.", null);
+        } else {
+            // EN VEZ DE IMPRIMIR, LO GUARDAMOS EN LA VARIABLE DE RETORNO
+            $codigoC = programa.generarCodigo(0);
+        }
+    }
+    ;
 
 dcllist[List<VariableC> vars, List<ConstanteC> consts] : dcl[$vars,$consts] dcllist[$vars, $consts] | ;
 
-cabecera : INTERFACE cablist END INTERFACE | ;
+cabecera[List<SubprogramaC> interfaces] : INTERFACE cablist[$interfaces] END INTERFACE | ;
 
-cablist : decproc decsubprog | decfun decsubprog ;
+cablist[List<SubprogramaC> interfaces]
+    : dp=decproc { $interfaces.add($dp.sub); } decsubprog[$interfaces]
+    | df=decfun { $interfaces.add($df.fun); } decsubprog[$interfaces]
+    ;
 
-decsubprog : decproc decsubprog | decfun decsubprog | ;
+decsubprog[List<SubprogramaC> interfaces]
+    : dp=decproc { $interfaces.add($dp.sub); } decsubprog[$interfaces]
+    | df=decfun { $interfaces.add($df.fun); } decsubprog[$interfaces]
+    | ;
 
 sentlist[List<SentenciaC> sents]
     : s=sent
@@ -50,18 +72,28 @@ ctelist [String tipoBase, List<ConstanteC> consts]
 simpvalue returns [String val]
     : NUM_INT_CONST   { $val = $NUM_INT_CONST.text; }
     | NUM_REAL_CONST  { $val = $NUM_REAL_CONST.text; }
-    | STRING_CONST    { $val = $STRING_CONST.text; }
-    | NUM_INT_CONST_B { $val = $NUM_INT_CONST_B.text; }
-    | NUM_INT_CONST_O { $val = $NUM_INT_CONST_O.text; }
-    | NUM_INT_CONST_H { $val = $NUM_INT_CONST_H.text; };
+    | STRING_CONST    {
+          String s = $STRING_CONST.text;
+          if (s.startsWith("'")) {
+              s = "\"" + s.substring(1, s.length() - 1) + "\"";
+          }
+          $val = s;
+      }
+    | NUM_INT_CONST_B { $val = "0b" + $NUM_INT_CONST_B.text.substring(2, $NUM_INT_CONST_B.text.length() - 1); }
+    | NUM_INT_CONST_O { $val = "00" + $NUM_INT_CONST_O.text.substring(2, $NUM_INT_CONST_O.text.length() - 1); }
+    | NUM_INT_CONST_H { $val = "0x" + $NUM_INT_CONST_H.text.substring(2, $NUM_INT_CONST_H.text.length() - 1); }
+    ;
 
 tipo returns [String t]
-          : INTEGER   { $t = "int"; }
-          | REAL      { $t = "float"; }
-          | CHARACTER charlength { $t = "char"; }
-          ;
+    : INTEGER   { $t = "int"; }
+    | REAL      { $t = "float"; }
+    | CHARACTER c=charlength { $t = "char" + $c.val; }
+    ;
 
-charlength : '(' NUM_INT_CONST ')'| ;
+charlength returns [String val]
+    : '(' n=NUM_INT_CONST ')' { $val = "[" + $n.text + "]"; }
+    | { $val = ""; }
+    ;
 
 varlist [String tipoBase, List<VariableC> vars]
     : id=IDENT i=init
@@ -97,16 +129,16 @@ decproc returns [SubprogramaC sub]
 
 formal_paramlist [SubprogramaC sub] : '(' nomparamlist[$sub] ')'  | ;
 
-nomparamlist [SubprogramaC sub]: id=IDENT{$sub.parametros.add(new ParametroC("", $id.text, ""));} nomparamlist_prime[$sub];
+nomparamlist [SubprogramaC sub]: id=IDENT{$sub.getParametros().add(new ParametroC("", $id.text, ""));} nomparamlist_prime[$sub];
 
-nomparamlist_prime[SubprogramaC sub] : ',' id=IDENT{$sub.parametros.add(new ParametroC("", $id.text, ""));} nomparamlist_prime[$sub] | ;
+nomparamlist_prime[SubprogramaC sub] : ',' id=IDENT{$sub.getParametros().add(new ParametroC("", $id.text, ""));} nomparamlist_prime[$sub] | ;
 
 dec_s_paramlist [SubprogramaC sub]
     : t=tipo ',' INTENT '(' m=tipoparam ')' id=IDENT ';'
       {
         boolean correcto = $sub.actualizarParametro($id.text, $t.t, $m.m);
         if (!correcto) {
-            System.err.println("Error Semántico: El parámetro '" + $id.text +  "' no coincide con el orden/nombre de la cabecera.");
+            notifyErrorListeners($id, "Error Semántico: El parámetro '" + $id.text +  "' no coincide con el orden/nombre de la cabecera.", null);
         }
       }
       dec_s_paramlist[$sub]
@@ -121,14 +153,12 @@ tipoparam returns [String m]
 decfun returns[SubprogramaC fun] : FUNCTION id1=IDENT
     {
         $fun = new SubprogramaC($id1.text, "");
-
     }'(' nomparamlist[$fun] ')' t=tipo  '::' id_ret=IDENT
     {
         $fun.setTipoRetorno($t.t);
         if (!$id1.text.equals($id_ret.text)) {
-            System.err.println("Error: El nombre de retorno no coincide con la función.");
+            notifyErrorListeners($id_ret, "Error Semántico: El nombre de retorno no coincide con la función.", null);
         }
-
     }';' dec_f_paramlist[$fun] END FUNCTION IDENT;
 
 dec_f_paramlist[SubprogramaC fun] : dec_f_paramlist_prime[$fun] ;
@@ -138,10 +168,10 @@ dec_f_paramlist_prime[SubprogramaC fun] :
     {
         boolean correcto = $fun.actualizarParametro($id.text, $t.t, "IN");
         if (!correcto) {
-            System.err.println("Error Semántico: El parámetro '" + $id.text +  "' no coincide con la cabecera.");
+            notifyErrorListeners($id, "Error Semántico: El parámetro '" + $id.text +  "' no coincide con la cabecera.", null);
         }
     }
-    dec_f_paramlist_prime[$fun] //Se ha quitado el renonbrado de dec_f_paramlist
+    dec_f_paramlist_prime[$fun]
     | ;
 
 sent returns [SentenciaC sentVal]
@@ -192,7 +222,11 @@ subpparamlist returns[String args]
         }
     | {$args = "" ; } ;
 
-subproglist : codproc subproglist | codfun subproglist | ;
+subproglist[List<SubprogramaC> implementaciones]
+    : cp=codproc { $implementaciones.add($cp.sub); } subproglist[$implementaciones]
+    | cf=codfun  { $implementaciones.add($cf.fun); } subproglist[$implementaciones]
+    |
+    ;
 
 codproc returns [SubprogramaC sub]
     : SUBROUTINE id1=IDENT
@@ -214,7 +248,7 @@ codfun returns[SubprogramaC fun]  : FUNCTION id1=IDENT
     {
       $fun.setTipoRetorno($t.t);
        if (!$id1.text.equals($id_ret.text)) {
-        System.err.println("Error: El nombre de retorno no coincide con la función.");
+       notifyErrorListeners($id_ret, "Error Semántico: El nombre de retorno no coincide con la función.", null);
        }
 
     }';' dec_f_paramlist[$fun] dcllist[$fun.getVariables(), new ArrayList<ConstanteC>()] fun_body[$fun] ;
@@ -227,11 +261,9 @@ fun_body[SubprogramaC fun]
 
 fun_body_prime[SubprogramaC fun] : END FUNCTION id2=IDENT
      {
-        // Comprobamos usando el nombre que guardamos al principio en el objeto
         if (!$fun.getNombre().equals($id2.text)) {
-            System.err.println("Error Semántico: El nombre del END FUNCTION no coincide.");
+            notifyErrorListeners($id2, "Error Semántico: El nombre del END FUNCTION no coincide.", null);
         }
-
      }
      | fun_body[$fun] ;
 
@@ -273,12 +305,12 @@ opcomp returns [String val]
 
 do_tail returns [SentenciaC doObj, List<SentenciaC> sents]
     //CASO DEL WHILE
-    : WHILE '(' ec=expcond ')' { $sents = new ArrayList<>(); } sentlist[$sents] ENDDO
+    : WHILE '(' ec=expcond ')' { $sents = new ArrayList<SentenciaC>(); } sentlist[$sents] ENDDO
       {
           $doObj = new BucleWhileC($ec.val, $sents);
       }
     // CASO DO --> FOR EN C
-    | id=IDENT '=' d1=doval ',' d2=doval ',' d3=doval { $sents = new ArrayList<>(); } sentlist[$sents] ENDDO
+    | id=IDENT '=' d1=doval ',' d2=doval ',' d3=doval { $sents = new ArrayList<SentenciaC>(); } sentlist[$sents] ENDDO
       {
           $doObj = new BucleForC($id.text, $d1.val, $d2.val, $d3.val, $sents);
       }
@@ -287,11 +319,11 @@ do_tail returns [SentenciaC doObj, List<SentenciaC> sents]
 if_tail [String cond] returns [IfC ifObj, List<SentenciaC> sIf]
     : s=sent
     {
-        $sIf = new ArrayList<>();
+        $sIf = new ArrayList<SentenciaC>();
         if ($s.sentVal != null) $sIf.add($s.sentVal);
-        $ifObj = new IfC($cond, $sIf, new ArrayList<>());
+        $ifObj = new IfC($cond, $sIf, new ArrayList<SentenciaC>());
     }
-    | THEN { $sIf = new ArrayList<>(); } sentlist[$sIf] itp=if_tail_prime
+    | THEN { $sIf = new ArrayList<SentenciaC>(); } sentlist[$sIf] itp=if_tail_prime
         {
           $ifObj = new IfC($cond, $sIf, $itp.sElse);
         }
@@ -300,9 +332,9 @@ if_tail [String cond] returns [IfC ifObj, List<SentenciaC> sIf]
 if_tail_prime returns [List<SentenciaC> sElse]
     : ENDIF
       {
-          $sElse = new ArrayList<>();
+          $sElse = new ArrayList<SentenciaC>();
       }
-    | ELSE { $sElse = new ArrayList<>(); } sentlist[$sElse] ENDIF
+    | ELSE { $sElse = new ArrayList<SentenciaC>(); } sentlist[$sElse] ENDIF
     ;
 
 doval returns [String val]
@@ -317,22 +349,22 @@ casos returns [List<CasoC> listaCasos, List<SentenciaC> listaDefault]
           $listaDefault = $cp.listaDefault;
       }
     | {
-          $listaCasos = new ArrayList<>();
-          $listaDefault = new ArrayList<>();
+          $listaCasos = new ArrayList<CasoC>();
+          $listaDefault = new ArrayList<SentenciaC>();
       }
     ;
 
 casos_prime returns [List<CasoC> listaCasos, List<SentenciaC> listaDefault]
-    : '(' e=etiquetas ')' { List<SentenciaC> sents = new ArrayList<>(); } sentlist[sents] c=casos
+    : '(' e=etiquetas ')' { List<SentenciaC> sents = new ArrayList<SentenciaC>(); } sentlist[sents] c=casos
       {
-          $listaCasos = new ArrayList<>();
+          $listaCasos = new ArrayList<CasoC>();
           $listaCasos.add(new CasoC($e.val, sents));
           $listaCasos.addAll($c.listaCasos); // Añadimos los casos siguientes
           $listaDefault = $c.listaDefault;   // Arrastramos el default si lo hay
       }
-    | DEFAULT { List<SentenciaC> sentsDef = new ArrayList<>(); } sentlist[sentsDef]
+    | DEFAULT { List<SentenciaC> sentsDef = new ArrayList<SentenciaC>(); } sentlist[sentsDef]
       {
-          $listaCasos = new ArrayList<>();
+          $listaCasos = new ArrayList<CasoC>();
           $listaDefault = sentsDef;
       }
     ;
@@ -406,7 +438,7 @@ NOT : '.NOT.' ;
 NUM_INT_CONST_B : 'b' '\'' [01]+ '\'';
 NUM_INT_CONST_O : 'o' '\'' [0-7]+ '\'' ;
 NUM_INT_CONST_H : 'z' '\'' [0-9a-fA-F]+ '\'' ;
-STRING_CONST: ('\'' (~[\r\n])* '\'' | '"' (~[\r\n])* '"');
+STRING_CONST: '\'' ~['\r\n]* '\'' | '"' ~["\r\n]* '"' ;
 NUM_REAL_CONST: '-'? ([0-9]+'.'[0-9]+ | [0-9]+ [eE] '-'? [0-9]+ | [0-9]+'.'[0-9]+[eE]'-'?[0-9]+);
 NUM_INT_CONST: '-'? [0-9]+ ;
 

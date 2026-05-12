@@ -1,6 +1,7 @@
 // Generated from /Users/zskyh/university/third-year/second-term/procesadores/FortranToCTranslator/src/Translator.g4 by ANTLR 4.13.2
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -230,6 +231,16 @@ public interface TranslatorListener extends ParseTreeListener {
 	 */
 	void exitTipoparam(TranslatorParser.TipoparamContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#decfun}.
+	 * @param ctx the parse tree
+	 */
+	void enterDecfun(TranslatorParser.DecfunContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#decfun}.
+	 * @param ctx the parse tree
+	 */
+	void exitDecfun(TranslatorParser.DecfunContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link TranslatorParser#dec_f_paramlist}.
 	 * @param ctx the parse tree
 	 */
@@ -369,6 +380,16 @@ public interface TranslatorListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitCodproc(TranslatorParser.CodprocContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#codfun}.
+	 * @param ctx the parse tree
+	 */
+	void enterCodfun(TranslatorParser.CodfunContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#codfun}.
+	 * @param ctx the parse tree
+	 */
+	void exitCodfun(TranslatorParser.CodfunContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link TranslatorParser#fun_body}.
 	 * @param ctx the parse tree
