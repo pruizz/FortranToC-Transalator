@@ -440,6 +440,18 @@ public class TranslatorBaseListener implements TranslatorListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterExplist_llamada(TranslatorParser.Explist_llamadaContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitExplist_llamada(TranslatorParser.Explist_llamadaContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterSubproglist(TranslatorParser.SubproglistContext ctx) { }
 	/**
 	 * {@inheritDoc}

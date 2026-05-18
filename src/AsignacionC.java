@@ -1,6 +1,7 @@
 public class AsignacionC extends SentenciaC {
     private String variable, valor;
     private boolean esReturn = false;
+    private boolean esPuntero = false;
 
     public AsignacionC(String variable, String valor) {
         this.variable = variable; this.valor = valor;
@@ -8,10 +9,12 @@ public class AsignacionC extends SentenciaC {
 
     @Override
     public String generarCodigo(int nivel) {
+        String izq = esPuntero ? "*" + variable : variable;
+
         if (esReturn) {
-            return tab(nivel) + "return " + valor + ";";
+            return ComponenteC.tab(nivel) + "return " + valor + ";";
         }
-        return tab(nivel) + variable + " = " + valor + ";";
+        return ComponenteC.tab(nivel) + izq + " = " + valor + ";";
     }
 
     public String getVariable() {
@@ -36,5 +39,13 @@ public class AsignacionC extends SentenciaC {
 
     public void setValor(String valor) {
         this.valor = valor;
+    }
+
+    public boolean isEsPuntero() {
+        return esPuntero;
+    }
+
+    public void setEsPuntero(boolean esPuntero) {
+        this.esPuntero = esPuntero;
     }
 }

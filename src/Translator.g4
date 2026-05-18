@@ -4,10 +4,26 @@ grammar Translator;
 import java.util.ArrayList;
 import java.util.List;
 }
+@parser::members {
+    ProgramaC programaGlobal;
+    SubprogramaC subprogramaActual;
 
-//Fase inicial creamos el programa completo y vamos pasando hacia abajo los atributos que guardaran el resto
+    public boolean esParametroReferencia(String nombreVar) {
+        if (subprogramaActual == null) return false;
+        return subprogramaActual.esPuntero(nombreVar);
+    }
+
+    public SubprogramaC buscarFuncionEnPrograma(String nombreFun) {
+        if (programaGlobal == null) return null;
+        return programaGlobal.buscarFuncion(nombreFun);
+    }
+}
+
 prg returns [String codigoC]
-    @init { ProgramaC programa = new ProgramaC(); }
+    @init {
+        ProgramaC programa = new ProgramaC();
+        this.programaGlobal = programa;
+    }
     : PROGRAM id1=IDENT ';'
     dcllist[programa.getVariablesMain(), programa.getConstantes()]
     cabecera[programa.getInterfaces()]
@@ -17,7 +33,6 @@ prg returns [String codigoC]
         if (!$id1.text.equals($id2.text)) {
             notifyErrorListeners($id2, "Error Semántico: El nombre del PROGRAM no coincide.", null);
         } else {
-            // EN VEZ DE IMPRIMIR, LO GUARDAMOS EN LA VARIABLE DE RETORNO
             $codigoC = programa.generarCodigo(0);
         }
     }
@@ -38,45 +53,28 @@ decsubprog[List<SubprogramaC> interfaces]
     | ;
 
 sentlist[List<SentenciaC> sents]
-    : s=sent
-            {   if($s.sentVal != null){
-                    $sents.add($s.sentVal);
-                }
-            }
-     sentlist_prime[$sents] ;
+    : s=sent { if($s.sentVal != null) $sents.add($s.sentVal); } sentlist_prime[$sents] ;
 
 sentlist_prime[List<SentenciaC> sents]
-    : s=sent
-        {   if($s.sentVal != null){
-                $sents.add($s.sentVal);
-            }
-        }
-        sentlist_prime[$sents] |  ;
+    : s=sent { if($s.sentVal != null) $sents.add($s.sentVal); } sentlist_prime[$sents] |  ;
 
 dcl[List<VariableC> vars, List<ConstanteC> consts] : t=tipo dcl_varcte[$t.t, $vars, $consts] ;
 
 dcl_varcte[String tipoBase, List<VariableC> vars, List<ConstanteC> consts] : ',' PARAMETER '::' id=IDENT '=' v=simpvalue
-    {
-        $consts.add(new ConstanteC($tipoBase, $id.text, $v.val));
-    }ctelist[$tipoBase, $consts] ';'
-           | '::' varlist[$tipoBase, $vars] ';' ;
+    { $consts.add(new ConstanteC($tipoBase, $id.text, $v.val)); } ctelist[$tipoBase, $consts] ';'
+    | '::' varlist[$tipoBase, $vars] ';' ;
 
 ctelist [String tipoBase, List<ConstanteC> consts]
-    : ',' id=IDENT '=' v=simpvalue
-      {
-          $consts.add(new ConstanteC($tipoBase, $id.text, $v.val));
-      }
-      ctelist[$tipoBase, $consts]
+    : ',' id=IDENT '=' v=simpvalue { $consts.add(new ConstanteC($tipoBase, $id.text, $v.val)); } ctelist[$tipoBase, $consts]
     |
     ;
+
 simpvalue returns [String val]
     : NUM_INT_CONST   { $val = $NUM_INT_CONST.text; }
     | NUM_REAL_CONST  { $val = $NUM_REAL_CONST.text; }
     | STRING_CONST    {
           String s = $STRING_CONST.text;
-          if (s.startsWith("'")) {
-              s = "\"" + s.substring(1, s.length() - 1) + "\"";
-          }
+          if (s.startsWith("'")) { s = "\"" + s.substring(1, s.length() - 1) + "\""; }
           $val = s;
       }
     | NUM_INT_CONST_B { $val = "0b" + $NUM_INT_CONST_B.text.substring(2, $NUM_INT_CONST_B.text.length() - 1); }
@@ -90,38 +88,21 @@ tipo returns [String t]
     | CHARACTER c=charlength { $t = "char" + $c.val; }
     ;
 
-charlength returns [String val]
-    : '(' n=NUM_INT_CONST ')' { $val = "[" + $n.text + "]"; }
-    | { $val = ""; }
-    ;
+charlength returns [String val] : '(' n=NUM_INT_CONST ')' { $val = "[" + $n.text + "]"; } | { $val = ""; } ;
 
 varlist [String tipoBase, List<VariableC> vars]
-    : id=IDENT i=init
-      {
-          $vars.add(new VariableC($tipoBase, $id.text, $i.val));
-      }
-      varlist_prime[$tipoBase, $vars]
+    : id=IDENT i=init { $vars.add(new VariableC($tipoBase, $id.text, $i.val)); } varlist_prime[$tipoBase, $vars]
     ;
 
 varlist_prime [String tipoBase, List<VariableC> vars]
-    : ',' id=IDENT i=init
-      {
-          $vars.add(new VariableC($tipoBase, $id.text, $i.val));
-      }
-      varlist_prime[$tipoBase, $vars]
+    : ',' id=IDENT i=init { $vars.add(new VariableC($tipoBase, $id.text, $i.val)); } varlist_prime[$tipoBase, $vars]
     |
     ;
 
-init returns [String val]
-    : '=' v=simpvalue { $val = $v.val; }
-    | { $val = ""; }
-    ;
+init returns [String val] : '=' v=simpvalue { $val = $v.val; } | { $val = ""; } ;
 
 decproc returns [SubprogramaC sub]
-    : SUBROUTINE id1=IDENT
-      {
-          $sub = new SubprogramaC($id1.text, "void");
-      }
+    : SUBROUTINE id1=IDENT { $sub = new SubprogramaC($id1.text, "void"); }
       formal_paramlist[$sub]
       dec_s_paramlist[$sub]
       END SUBROUTINE id2=IDENT
@@ -137,28 +118,18 @@ dec_s_paramlist [SubprogramaC sub]
     : t=tipo ',' INTENT '(' m=tipoparam ')' id=IDENT ';'
       {
         boolean correcto = $sub.actualizarParametro($id.text, $t.t, $m.m);
-        if (!correcto) {
-            notifyErrorListeners($id, "Error Semántico: El parámetro '" + $id.text +  "' no coincide con el orden/nombre de la cabecera.", null);
-        }
+        if (!correcto) { notifyErrorListeners($id, "Error Semántico: El parámetro '" + $id.text +  "' no coincide con el orden/nombre de la cabecera.", null); }
       }
       dec_s_paramlist[$sub]
     | ;
 
-tipoparam returns [String m]
-          : IN    { $m = "IN"; }
-          | OUT   { $m = "OUT"; }
-          | INOUT { $m = "INOUT"; }
-          ;
+tipoparam returns [String m] : IN { $m = "IN"; } | OUT { $m = "OUT"; } | INOUT { $m = "INOUT"; } ;
 
-decfun returns[SubprogramaC fun] : FUNCTION id1=IDENT
-    {
-        $fun = new SubprogramaC($id1.text, "");
-    }'(' nomparamlist[$fun] ')' t=tipo  '::' id_ret=IDENT
+decfun returns[SubprogramaC fun] : FUNCTION id1=IDENT { $fun = new SubprogramaC($id1.text, ""); }
+    '(' nomparamlist[$fun] ')' t=tipo  '::' id_ret=IDENT
     {
         $fun.setTipoRetorno($t.t);
-        if (!$id1.text.equals($id_ret.text)) {
-            notifyErrorListeners($id_ret, "Error Semántico: El nombre de retorno no coincide con la función.", null);
-        }
+        if (!$id1.text.equals($id_ret.text)) { notifyErrorListeners($id_ret, "Error Semántico: El nombre de retorno no coincide con la función.", null); }
     }';' dec_f_paramlist[$fun] END FUNCTION IDENT;
 
 dec_f_paramlist[SubprogramaC fun] : dec_f_paramlist_prime[$fun] ;
@@ -167,15 +138,18 @@ dec_f_paramlist_prime[SubprogramaC fun] :
     t=tipo ',' INTENT '(' IN ')' id=IDENT ';'
     {
         boolean correcto = $fun.actualizarParametro($id.text, $t.t, "IN");
-        if (!correcto) {
-            notifyErrorListeners($id, "Error Semántico: El parámetro '" + $id.text +  "' no coincide con la cabecera.", null);
-        }
+        if (!correcto) { notifyErrorListeners($id, "Error Semántico: El parámetro '" + $id.text +  "' no coincide con la cabecera.", null); }
     }
     dec_f_paramlist_prime[$fun]
     | ;
 
 sent returns [SentenciaC sentVal]
-    : id=IDENT '=' e=exp ';' {$sentVal = new AsignacionC($id.text,$e.val); }
+    : id=IDENT '=' e=exp ';'
+      {
+          AsignacionC asig = new AsignacionC($id.text, $e.val);
+          if (esParametroReferencia($id.text)) asig.setEsPuntero(true);
+          $sentVal = asig;
+      }
     | pc=proc_call ';' {$sentVal = $pc.procCallVal ; }
     | IF '(' ec=expcond ')' it=if_tail[$ec.val]   { $sentVal = $it.ifObj; }
     | DO dt=do_tail { $sentVal = $dt.doObj; }
@@ -184,28 +158,29 @@ sent returns [SentenciaC sentVal]
 
 exp returns [String val] : f=factor ep=exp_prime[$f.val] { $val = $ep.valSin; } ;
 
-//Ahora para todos estos casos de Strings que no se van a guardar en variables java si hay que tener tanto heredados
-//para ir rellenando los valores hacia abajo y luego devlver el sintetizado para luego cogerlo hacia arriba relleno
-//ya que en esre caso no estamos teniendo la referencia a ningun objeto por simplificacion y no crear mas clases.
 exp_prime[String valHeredado ] returns [String valSin]:
     o=op f=factor ep=exp_prime[$valHeredado + " " + $o.val + " " + $f.val] { $valSin = $ep.valSin; }
     | { $valSin = $valHeredado; };
 
-op returns [String val]
-    : oparit { $val = $oparit.text; }
-    ;
-
+op returns [String val] : oparit { $val = $oparit.text; } ;
 oparit : '+' | '-' | '*' | '/' ;
 
 factor returns [String val]
        : s=simpvalue       { $val = $s.val; }
        | '(' e=exp ')'     { $val = "(" + $e.val + ")"; }
-       | id=IDENT fp=factor_prime[$id.text] { $val = $fp.val; }
+       | id=IDENT fp=factor_prime
+         {
+             String prefix = $id.text;
+             if ($fp.val.isEmpty() && esParametroReferencia($id.text)) {
+                 prefix = "*" + prefix;
+             }
+             $val = prefix + $fp.val;
+         }
        ;
 
-factor_prime [String valHeredado] returns [String val]
-    : '(' e=exp el=explist[$e.val] ')' { $val = $valHeredado + "(" + $el.val + ")"; }
-    | { $val = $valHeredado ; }
+factor_prime returns [String val]
+    : '(' e=exp el=explist[$e.val] ')' { $val = "(" + $el.val + ")"; }
+    | { $val = ""; }
     ;
 
 explist [String valHeredado] returns [String val]
@@ -213,14 +188,37 @@ explist [String valHeredado] returns [String val]
     | { $val = $valHeredado; }
     ;
 
-proc_call returns [LlamadaC procCallVal]: CALL id=IDENT sp=subpparamlist {$procCallVal = new LlamadaC($id.text, $sp.args);};
+proc_call returns [LlamadaC procCallVal]
+    : CALL id=IDENT sp=subpparamlist
+      {
+          SubprogramaC funcDestino = buscarFuncionEnPrograma($id.text);
+          List<String> argsFinales = new ArrayList<String>();
 
-subpparamlist returns[String args]
-    : '(' e=exp ep=explist[$e.val] ')'
-        {
-           $args = $ep.val ;
-        }
-    | {$args = "" ; } ;
+          for (int i = 0; i < $sp.args.size(); i++) {
+              String argumento = $sp.args.get(i);
+              if (funcDestino != null && i < funcDestino.getParametros().size()) {
+                  String modo = funcDestino.getParametros().get(i).getModo();
+                  if ("OUT".equalsIgnoreCase(modo) || "INOUT".equalsIgnoreCase(modo)) {
+                      argumento = "&" + argumento;
+                  }
+              }
+              argsFinales.add(argumento);
+          }
+          String argsCompilados = String.join(", ", argsFinales);
+          $procCallVal = new LlamadaC($id.text, argsCompilados);
+      }
+    ;
+
+subpparamlist returns [List<String> args]
+    @init { $args = new ArrayList<String>(); }
+    : '(' e=exp { $args.add($e.val); } el=explist_llamada[$args] ')'
+    |
+    ;
+
+explist_llamada [List<String> listaHeredada]
+    : ',' e=exp { $listaHeredada.add($e.val); } explist_llamada[$listaHeredada]
+    |
+    ;
 
 subproglist[List<SubprogramaC> implementaciones]
     : cp=codproc { $implementaciones.add($cp.sub); } subproglist[$implementaciones]
@@ -232,8 +230,9 @@ codproc returns [SubprogramaC sub]
     : SUBROUTINE id1=IDENT
       {
           $sub = new SubprogramaC($id1.text, "void");
+          this.subprogramaActual = $sub; // nos guardmaos el subprgrama actual que estamos reconociendo asi podremso identificar los parametros de entrad y salida
       }
-      formal_paramlist[$sub]   // HEREDADO
+      formal_paramlist[$sub]
       dec_s_paramlist[$sub]
       dcllist[$sub.getVariables(), new ArrayList<ConstanteC>()]
       sentlist[$sub.getSentencias()]
@@ -243,46 +242,40 @@ codproc returns [SubprogramaC sub]
 codfun returns[SubprogramaC fun]  : FUNCTION id1=IDENT
     {
         $fun = new SubprogramaC($id1.text,"");
-
-    }'(' nomparamlist[$fun] ')' t=tipo '::' id_ret=IDENT
+        this.subprogramaActual = $fun; //Mismo caso para las funciones
+    }
+    '(' nomparamlist[$fun] ')' t=tipo '::' id_ret=IDENT
     {
-      $fun.setTipoRetorno($t.t);
-       if (!$id1.text.equals($id_ret.text)) {
-       notifyErrorListeners($id_ret, "Error Semántico: El nombre de retorno no coincide con la función.", null);
-       }
-
+       $fun.setTipoRetorno($t.t);
+       if (!$id1.text.equals($id_ret.text)) { notifyErrorListeners($id_ret, "Error Semántico: El nombre de retorno no coincide con la función.", null); }
     }';' dec_f_paramlist[$fun] dcllist[$fun.getVariables(), new ArrayList<ConstanteC>()] fun_body[$fun] ;
 
 fun_body[SubprogramaC fun]
-    : CALL id=IDENT sp=subpparamlist ';'
-    { $fun.getSentencias().add(new LlamadaC($id.text, $sp.args)); } fun_body[$fun]
+    : pc=proc_call ';' { $fun.getSentencias().add($pc.procCallVal); } fun_body[$fun]
     | id=IDENT '=' e=exp ';'
-    { $fun.getSentencias().add(new AsignacionC($id.text, $e.val)); } fun_body_prime[$fun] ;
+      {
+          AsignacionC asig = new AsignacionC($id.text, $e.val);
+          if (esParametroReferencia($id.text)) asig.setEsPuntero(true);
+          $fun.getSentencias().add(asig);
+      } fun_body_prime[$fun] ;
 
-fun_body_prime[SubprogramaC fun] : END FUNCTION id2=IDENT
+fun_body_prime[SubprogramaC fun]
+     : END FUNCTION id2=IDENT
      {
-        if (!$fun.getNombre().equals($id2.text)) {
-            notifyErrorListeners($id2, "Error Semántico: El nombre del END FUNCTION no coincide.", null);
-        }
+        if (!$fun.getNombre().equals($id2.text)) { notifyErrorListeners($id2, "Error Semántico: El nombre del END FUNCTION no coincide.", null); }
      }
      | fun_body[$fun] ;
 
-//PARTE OPCIONAL
 expcond returns [String val]
     : fc=factorcond ecp=expcond_prime[$fc.val] { $val = $ecp.val; } ;
 
 expcond_prime [String valHeredado] returns [String val]
-    : o=oplog fc=factorcond ecp=expcond_prime[$valHeredado + " " + $o.val + " " + $fc.val]
-      { $val = $ecp.val; }
+    : o=oplog fc=factorcond ecp=expcond_prime[$valHeredado + " " + $o.val + " " + $fc.val] { $val = $ecp.val; }
     | { $val = $valHeredado; }
     ;
 
 oplog returns [String val]
-     : OR   { $val = "||"; }
-     | AND  { $val = "&&"; }
-     | EQV  { $val = "=="; }
-     | NEQV { $val = "!="; }
-     ;
+     : OR   { $val = "||"; } | AND  { $val = "&&"; } | EQV  { $val = "=="; } | NEQV { $val = "!="; } ;
 
 factorcond returns [String val]
            : e1=exp oc=opcomp e2=exp { $val = $e1.val + " " + $oc.val + " " + $e2.val; }
@@ -292,66 +285,36 @@ factorcond returns [String val]
            | FALSE                   { $val = "0"; }
            ;
 
-opcomp returns [String val]
-       : '<'  { $val = "<"; }
-       | '>'  { $val = ">"; }
-       | '<=' { $val = "<="; }
-       | '>=' { $val = ">="; }
-       | '==' { $val = "=="; }
-       | '/=' { $val = "!="; }
-       ;
-
-// --- SENTENCIAS Y CONTROL DE FLUJO (LL1) ---
+opcomp returns [String val] : '<'  { $val = "<"; } | '>'  { $val = ">"; } | '<=' { $val = "<="; } | '>=' { $val = ">="; } | '==' { $val = "=="; } | '/=' { $val = "!="; } ;
 
 do_tail returns [SentenciaC doObj, List<SentenciaC> sents]
-    //CASO DEL WHILE
     : WHILE '(' ec=expcond ')' { $sents = new ArrayList<SentenciaC>(); } sentlist[$sents] ENDDO
-      {
-          $doObj = new BucleWhileC($ec.val, $sents);
-      }
-    // CASO DO --> FOR EN C
+      { $doObj = new BucleWhileC($ec.val, $sents); }
     | id=IDENT '=' d1=doval ',' d2=doval ',' d3=doval { $sents = new ArrayList<SentenciaC>(); } sentlist[$sents] ENDDO
-      {
-          $doObj = new BucleForC($id.text, $d1.val, $d2.val, $d3.val, $sents);
-      }
+      { $doObj = new BucleForC($id.text, $d1.val, $d2.val, $d3.val, $sents); }
     ;
 
 if_tail [String cond] returns [IfC ifObj, List<SentenciaC> sIf]
     : s=sent
-    {
-        $sIf = new ArrayList<SentenciaC>();
-        if ($s.sentVal != null) $sIf.add($s.sentVal);
-        $ifObj = new IfC($cond, $sIf, new ArrayList<SentenciaC>());
-    }
+      {
+          $sIf = new ArrayList<SentenciaC>();
+          if ($s.sentVal != null) $sIf.add($s.sentVal);
+          $ifObj = new IfC($cond, $sIf, new ArrayList<SentenciaC>());
+      }
     | THEN { $sIf = new ArrayList<SentenciaC>(); } sentlist[$sIf] itp=if_tail_prime
-        {
-          $ifObj = new IfC($cond, $sIf, $itp.sElse);
-        }
+      { $ifObj = new IfC($cond, $sIf, $itp.sElse); }
     ;
 
 if_tail_prime returns [List<SentenciaC> sElse]
-    : ENDIF
-      {
-          $sElse = new ArrayList<SentenciaC>();
-      }
+    : ENDIF { $sElse = new ArrayList<SentenciaC>(); }
     | ELSE { $sElse = new ArrayList<SentenciaC>(); } sentlist[$sElse] ENDIF
     ;
 
-doval returns [String val]
-    : nic=NUM_INT_CONST {$val = $nic.text; }
-    | id=IDENT {$val = $id.text; }
-    ;
+doval returns [String val] : nic=NUM_INT_CONST {$val = $nic.text; } | id=IDENT {$val = $id.text; } ;
 
 casos returns [List<CasoC> listaCasos, List<SentenciaC> listaDefault]
-    : CASE cp=casos_prime
-      {
-          $listaCasos = $cp.listaCasos;
-          $listaDefault = $cp.listaDefault;
-      }
-    | {
-          $listaCasos = new ArrayList<CasoC>();
-          $listaDefault = new ArrayList<SentenciaC>();
-      }
+    : CASE cp=casos_prime { $listaCasos = $cp.listaCasos; $listaDefault = $cp.listaDefault; }
+    | { $listaCasos = new ArrayList<CasoC>(); $listaDefault = new ArrayList<SentenciaC>(); }
     ;
 
 casos_prime returns [List<CasoC> listaCasos, List<SentenciaC> listaDefault]
@@ -359,8 +322,8 @@ casos_prime returns [List<CasoC> listaCasos, List<SentenciaC> listaDefault]
       {
           $listaCasos = new ArrayList<CasoC>();
           $listaCasos.add(new CasoC($e.val, sents));
-          $listaCasos.addAll($c.listaCasos); // Añadimos los casos siguientes
-          $listaDefault = $c.listaDefault;   // Arrastramos el default si lo hay
+          $listaCasos.addAll($c.listaCasos);
+          $listaDefault = $c.listaDefault;
       }
     | DEFAULT { List<SentenciaC> sentsDef = new ArrayList<SentenciaC>(); } sentlist[sentsDef]
       {
@@ -375,27 +338,14 @@ etiquetas returns [String val]
     ;
 
 etiquetas_tail [String sHeredado] returns [String val]
-    //Lista con comas
     : le=listaetiqetas[$sHeredado] { $val = $le.val; }
-    // Rango con puntos
-    | ':' etp=etiquetas_tail_prime
-      {
-          if ($etp.val.isEmpty()) {
-              $val = "case > " + $sHeredado + ":";
-          } else {
-              $val = "case " + $sHeredado + " to " + $etp.val + ":";
-          }
-      }
+    | ':' etp=etiquetas_tail_prime { if ($etp.val.isEmpty()) { $val = "case > " + $sHeredado + ":"; } else { $val = "case " + $sHeredado + " to " + $etp.val + ":"; } }
     ;
 
-etiquetas_tail_prime returns [String val]
-    : s=simpvalue { $val = $s.val; }
-    | { $val = ""; }
-    ;
+etiquetas_tail_prime returns [String val] : s=simpvalue { $val = $s.val; } | { $val = ""; } ;
 
 listaetiqetas [String sHeredado] returns [String val]
-    : ',' s=simpvalue le=listaetiqetas[ $sHeredado + ":\ncase " + $s.val ]
-      { $val = $le.val; }
+    : ',' s=simpvalue le=listaetiqetas[ $sHeredado + ":\ncase " + $s.val ] { $val = $le.val; }
     |  { $val = "case " + $sHeredado + ":"; }
     ;
 
@@ -413,8 +363,6 @@ IN : 'IN' ;
 OUT : 'OUT' ;
 INOUT : 'INOUT' ;
 CALL : 'CALL' ;
-
-
 IF : 'IF';
 DO : 'DO';
 SELECT : 'SELECT';
@@ -425,8 +373,6 @@ THEN : 'THEN';
 ENDIF : 'ENDIF';
 ELSE: 'ELSE';
 DEFAULT: 'DEFAULT';
-
-
 TRUE: '.TRUE.' ;
 FALSE: '.FALSE.' ;
 OR : '.OR.' ;
@@ -441,10 +387,7 @@ NUM_INT_CONST_H : 'z' '\'' [0-9a-fA-F]+ '\'' ;
 STRING_CONST: '\'' ~['\r\n]* '\'' | '"' ~["\r\n]* '"' ;
 NUM_REAL_CONST: '-'? ([0-9]+'.'[0-9]+ | [0-9]+ [eE] '-'? [0-9]+ | [0-9]+'.'[0-9]+[eE]'-'?[0-9]+);
 NUM_INT_CONST: '-'? [0-9]+ ;
-
-
 IDENT : [a-zA-Z] [a-zA-Z0-9_]*;
-
 COMMENT: '!' ~[\r\n]* -> skip;
 LN : ('\r' | '\n' | '\r\n')+ -> skip;
 WS : [ \t\f]+ -> skip;

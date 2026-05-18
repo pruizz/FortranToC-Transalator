@@ -361,6 +361,16 @@ public interface TranslatorListener extends ParseTreeListener {
 	 */
 	void exitSubpparamlist(TranslatorParser.SubpparamlistContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link TranslatorParser#explist_llamada}.
+	 * @param ctx the parse tree
+	 */
+	void enterExplist_llamada(TranslatorParser.Explist_llamadaContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TranslatorParser#explist_llamada}.
+	 * @param ctx the parse tree
+	 */
+	void exitExplist_llamada(TranslatorParser.Explist_llamadaContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link TranslatorParser#subproglist}.
 	 * @param ctx the parse tree
 	 */

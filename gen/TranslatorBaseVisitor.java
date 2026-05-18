@@ -266,6 +266,13 @@ public class TranslatorBaseVisitor<T> extends AbstractParseTreeVisitor<T> implem
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitExplist_llamada(TranslatorParser.Explist_llamadaContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitSubproglist(TranslatorParser.SubproglistContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}

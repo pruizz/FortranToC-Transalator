@@ -224,6 +224,12 @@ public interface TranslatorVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSubpparamlist(TranslatorParser.SubpparamlistContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link TranslatorParser#explist_llamada}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExplist_llamada(TranslatorParser.Explist_llamadaContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link TranslatorParser#subproglist}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

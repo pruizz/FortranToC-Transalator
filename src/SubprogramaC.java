@@ -63,6 +63,16 @@ public class SubprogramaC extends ComponenteC {
         return sb.toString();
     }
 
+    public boolean esPuntero(String nombreVar) {
+        for (ParametroC p : parametros) {
+            if (p.getNombre().equalsIgnoreCase(nombreVar)) {
+                String m = p.getModo();
+                return "OUT".equalsIgnoreCase(m) || "INOUT".equalsIgnoreCase(m);
+            }
+        }
+        return false;
+    }
+
     public String getNombre() {
         return nombre;
     }

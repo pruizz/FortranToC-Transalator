@@ -54,6 +54,15 @@ public class ProgramaC extends ComponenteC {
 
         return sb.toString();
     }
+    public SubprogramaC buscarFuncion(String nombreFun) {
+        for (SubprogramaC f : interfaces) {
+            if (f.getNombre().equalsIgnoreCase(nombreFun)) return f;
+        }
+        for (SubprogramaC f : implementaciones) {
+            if (f.getNombre().equalsIgnoreCase(nombreFun)) return f;
+        }
+        return null;
+    }
 
     public void setConstantes(List<ConstanteC> constantes) {
         this.constantes = constantes;
