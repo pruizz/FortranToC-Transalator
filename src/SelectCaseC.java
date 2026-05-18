@@ -21,16 +21,14 @@ public class SelectCaseC extends SentenciaC {
             sb.append(c.generarCodigo(nivel + 1));
         }
 
-        // Imprimimos el default si lo hay
         if (sentDefault != null && !sentDefault.isEmpty()) {
             sb.append(ComponenteC.tab(nivel + 1)).append("default:\n");
             for (SentenciaC s : sentDefault) {
                 sb.append(s.generarCodigo(nivel + 2)).append("\n");
             }
-            sb.append(ComponenteC.tab(nivel + 2)).append("break;\n");
         }
 
-        sb.append(ComponenteC.tab(nivel)).append("}");
+        sb.append(ComponenteC.tab(nivel)).append("}\n");
         return sb.toString();
     }
 

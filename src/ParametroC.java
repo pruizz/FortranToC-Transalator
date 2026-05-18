@@ -7,20 +7,17 @@ public class ParametroC extends ComponenteC {
 
     @Override
     public String generarCodigo(int nivel) {
-        String tipoC = tipo;
-        String dim = "";
-
-        // Truco: Si le llega char[10], lo convertimos en char y le ponemos []
-        if (tipo != null && tipo.startsWith("char[")) {
-            tipoC = "char";
-            dim = "[]";
+        String tipoC = this.tipo;
+        if ("OUT".equalsIgnoreCase(this.modo) || "INOUT".equalsIgnoreCase(this.modo)) {
+            if (tipoC.startsWith("char[")) {
+                tipoC = "char";
+            }
+            return tipoC + " * " + this.nombre;
         }
-
-        if ("OUT".equalsIgnoreCase(modo) || "INOUT".equalsIgnoreCase(modo)) {
-            tipoC += " *";
+        if (tipoC.startsWith("char[")) {
+            return "char " + this.nombre + "[]";
         }
-
-        return tipoC + " " + nombre + dim;
+        return tipoC + " " + this.nombre;
     }
 
     public String getTipo() {

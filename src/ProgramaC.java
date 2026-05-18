@@ -18,18 +18,13 @@ public class ProgramaC extends ComponenteC {
     @Override
     public String generarCodigo(int nivel) {
         StringBuilder sb = new StringBuilder();
-
-        // Cabeceras de C
-        sb.append("#include <stdio.h>\n");
-        sb.append("#include <stdlib.h>\n\n");
-
         // 1. Constantes globales (#define)
         for (ConstanteC c : constantes) {
             sb.append(c.generarCodigo(0)).append("\n");
         }
         if (!constantes.isEmpty()) sb.append("\n");
 
-        // 2. Prototipos de funciones [cite: 206]
+        // 2. Prototipos de funciones
         for (SubprogramaC p : interfaces) {
             sb.append(p.generarCodigoCabecera()).append(";\n");
         }

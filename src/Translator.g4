@@ -74,11 +74,20 @@ simpvalue returns [String val]
     | NUM_REAL_CONST  { $val = $NUM_REAL_CONST.text; }
     | STRING_CONST    {
           String s = $STRING_CONST.text;
-          if (s.startsWith("'")) { s = "\"" + s.substring(1, s.length() - 1) + "\""; }
-          $val = s;
+          char delimitador = s.charAt(0);
+          String contenido = s.substring(1, s.length() - 1);
+
+          if (delimitador == '\'') {
+              contenido = contenido.replace("''", "'");
+          } else {
+              contenido = contenido.replace("\"\"", "\"");
+          }
+          // 2. Escapar comillas dobles y añadir las comillas de C
+          contenido = contenido.replace("\"", "\\\"");
+          $val = "\"" + contenido + "\"";
       }
     | NUM_INT_CONST_B { $val = "0b" + $NUM_INT_CONST_B.text.substring(2, $NUM_INT_CONST_B.text.length() - 1); }
-    | NUM_INT_CONST_O { $val = "00" + $NUM_INT_CONST_O.text.substring(2, $NUM_INT_CONST_O.text.length() - 1); }
+    | NUM_INT_CONST_O { $val = "0o" + $NUM_INT_CONST_O.text.substring(2, $NUM_INT_CONST_O.text.length() - 1); }
     | NUM_INT_CONST_H { $val = "0x" + $NUM_INT_CONST_H.text.substring(2, $NUM_INT_CONST_H.text.length() - 1); }
     ;
 
@@ -106,6 +115,11 @@ decproc returns [SubprogramaC sub]
       formal_paramlist[$sub]
       dec_s_paramlist[$sub]
       END SUBROUTINE id2=IDENT
+      {
+          if (!$id1.text.equals($id2.text)) {
+              notifyErrorListeners($id2, "Error Semántico: El nombre en END SUBROUTINE no coincide con el de la cabecera.", null);
+          }
+      }
     ;
 
 formal_paramlist [SubprogramaC sub] : '(' nomparamlist[$sub] ')'  | ;
@@ -130,7 +144,13 @@ decfun returns[SubprogramaC fun] : FUNCTION id1=IDENT { $fun = new SubprogramaC(
     {
         $fun.setTipoRetorno($t.t);
         if (!$id1.text.equals($id_ret.text)) { notifyErrorListeners($id_ret, "Error Semántico: El nombre de retorno no coincide con la función.", null); }
-    }';' dec_f_paramlist[$fun] END FUNCTION IDENT;
+    }';' dec_f_paramlist[$fun] END FUNCTION id2=IDENT
+    {
+        if (!$id1.text.equals($id2.text)) {
+            notifyErrorListeners($id2, "Error Semántico: El nombre en END FUNCTION no coincide con el de la cabecera.", null);
+        }
+    }
+    ;
 
 dec_f_paramlist[SubprogramaC fun] : dec_f_paramlist_prime[$fun] ;
 
@@ -234,9 +254,14 @@ codproc returns [SubprogramaC sub]
       }
       formal_paramlist[$sub]
       dec_s_paramlist[$sub]
-      dcllist[$sub.getVariables(), new ArrayList<ConstanteC>()]
+      dcllist[$sub.getVariables(), programaGlobal.getConstantes()]
       sentlist[$sub.getSentencias()]
       END SUBROUTINE id2=IDENT
+      {
+        if (!$id1.text.equals($id2.text)) {
+            notifyErrorListeners($id2, "Error Semántico: El nombre en END SUBROUTINE no coincide con el de la cabecera.", null);
+                    }
+      }
     ;
 
 codfun returns[SubprogramaC fun]  : FUNCTION id1=IDENT
@@ -248,7 +273,7 @@ codfun returns[SubprogramaC fun]  : FUNCTION id1=IDENT
     {
        $fun.setTipoRetorno($t.t);
        if (!$id1.text.equals($id_ret.text)) { notifyErrorListeners($id_ret, "Error Semántico: El nombre de retorno no coincide con la función.", null); }
-    }';' dec_f_paramlist[$fun] dcllist[$fun.getVariables(), new ArrayList<ConstanteC>()] fun_body[$fun] ;
+    }';' dec_f_paramlist[$fun] dcllist[$fun.getVariables(), programaGlobal.getConstantes()] fun_body[$fun] ;
 
 fun_body[SubprogramaC fun]
     : pc=proc_call ';' { $fun.getSentencias().add($pc.procCallVal); } fun_body[$fun]
@@ -275,7 +300,7 @@ expcond_prime [String valHeredado] returns [String val]
     ;
 
 oplog returns [String val]
-     : OR   { $val = "||"; } | AND  { $val = "&&"; } | EQV  { $val = "=="; } | NEQV { $val = "!="; } ;
+     : OR   { $val = "||"; } | AND  { $val = "&&"; } | EQV  { $val = "!^"; } | NEQV { $val = "^"; } ;
 
 factorcond returns [String val]
            : e1=exp oc=opcomp e2=exp { $val = $e1.val + " " + $oc.val + " " + $e2.val; }
@@ -384,7 +409,10 @@ NOT : '.NOT.' ;
 NUM_INT_CONST_B : 'b' '\'' [01]+ '\'';
 NUM_INT_CONST_O : 'o' '\'' [0-7]+ '\'' ;
 NUM_INT_CONST_H : 'z' '\'' [0-9a-fA-F]+ '\'' ;
-STRING_CONST: '\'' ~['\r\n]* '\'' | '"' ~["\r\n]* '"' ;
+STRING_CONST
+    : '\'' ( '\'\'' | ~['\r\n] )* '\''
+    | '"'  ( '""'   | ~["\r\n] )* '"'
+    ;
 NUM_REAL_CONST: '-'? ([0-9]+'.'[0-9]+ | [0-9]+ [eE] '-'? [0-9]+ | [0-9]+'.'[0-9]+[eE]'-'?[0-9]+);
 NUM_INT_CONST: '-'? [0-9]+ ;
 IDENT : [a-zA-Z] [a-zA-Z0-9_]*;

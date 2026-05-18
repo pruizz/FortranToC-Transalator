@@ -30,17 +30,17 @@ public class Translator {
             String codigoGenerado = anasint.prg().codigoC;
 
             // Si el código no es nulo (es decir, si no hubo errores que pararan la traducción)
-            if (codigoGenerado != null) {
-                // Cambiamos la extensión de .for a .c (ignorando mayúsculas/minúsculas)
+            if (anasint.getNumberOfSyntaxErrors() == 0 && codigoGenerado != null) {
                 String archivoSalida = archivoEntrada.replaceAll("(?i)\\.for$", ".c");
 
-                // Creamos y escribimos el archivo
                 try (PrintWriter out = new PrintWriter(archivoSalida)) {
                     out.print(codigoGenerado);
                 }
 
-                System.out.println("✅ Traducción completada con éxito.");
+                System.out.println("Traducción completada con éxito.");
                 System.out.println("Archivo generado: " + archivoSalida);
+            } else {
+                System.err.println("\nSe detectaron errores. No se ha generado el código C de salida.");
             }
 
         } catch (IOException e) {

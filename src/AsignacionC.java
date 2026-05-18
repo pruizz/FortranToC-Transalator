@@ -9,12 +9,15 @@ public class AsignacionC extends SentenciaC {
 
     @Override
     public String generarCodigo(int nivel) {
-        String izq = esPuntero ? "*" + variable : variable;
+        String tab = ComponenteC.tab(nivel);
 
         if (esReturn) {
-            return ComponenteC.tab(nivel) + "return " + valor + ";";
+            return tab + "return " + valor + ";";
         }
-        return ComponenteC.tab(nivel) + izq + " = " + valor + ";";
+
+        String izq = esPuntero ? "*" + variable : variable;
+
+        return tab + izq + " = " + valor + ";";
     }
 
     public String getVariable() {
