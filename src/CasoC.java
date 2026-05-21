@@ -1,7 +1,7 @@
 import java.util.List;
 
 public class CasoC extends ComponenteC {
-    private String etiquetas; // Ya viene formateado desde ANTLR (ej: "case 1:")
+    private String etiquetas;
     private List<SentenciaC> sentencias;
 
     public CasoC(String etiquetas, List<SentenciaC> sentencias) {
