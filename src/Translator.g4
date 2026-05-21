@@ -190,10 +190,11 @@ factor returns [String val]
        | id=IDENT fp=factor_prime
          {
              String prefix = $id.text;
-             if ($fp.val.isEmpty() && esParametroReferencia($id.text)) {
-                 prefix = "*" + prefix;
+             String fpStr = ($fp.val == null) ? "" : $fp.val;
+             if (fpStr.isEmpty() && esParametroReferencia($id.text)) {
+                prefix = "*" + prefix;
              }
-             $val = prefix + $fp.val;
+             $val = prefix + fpStr;
          }
        ;
 
@@ -286,7 +287,13 @@ fun_body[SubprogramaC fun]
 fun_body_prime[SubprogramaC fun]
      : END FUNCTION id2=IDENT
      {
-        if (!$fun.getNombre().equals($id2.text)) { notifyErrorListeners($id2, "Error Semántico: El nombre del END FUNCTION no coincide.", null); }
+        if (!$fun.getNombre().equals($id2.text)) {
+            notifyErrorListeners($id2, "Error Semántico: El nombre del END FUNCTION no coincide.", null);
+        }
+
+        if (!$fun.validarRetornoEstricto()) {
+            notifyErrorListeners($id2, "Error Semántico: La última sentencia de la función '" + $fun.getNombre() + "' debe ser la asignación de su valor de retorno.", null);
+        }
      }
      | fun_body[$fun] ;
 
@@ -363,7 +370,15 @@ etiquetas returns [String val]
 
 etiquetas_tail [String sHeredado] returns [String val]
     : le=listaetiqetas[$sHeredado] { $val = $le.val; }
-    | ':' etp=etiquetas_tail_prime { if ($etp.val.isEmpty()) { $val = "case > " + $sHeredado + ":"; } else { $val = "case " + $sHeredado + " to " + $etp.val + ":"; } }
+    | ':' etp=etiquetas_tail_prime
+    {
+        String etpStr = ($etp.val == null) ? "" : $etp.val;
+        if (etpStr.isEmpty()) {
+            $val = "case > " + $sHeredado + ":";
+        } else {
+            $val = "case " + $sHeredado + " to " + etpStr + ":";
+        }
+    }
     ;
 
 etiquetas_tail_prime returns [String val] : s=simpvalue { $val = $s.val; } | { $val = ""; } ;

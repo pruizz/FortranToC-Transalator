@@ -1,43 +1,42 @@
-PROGRAM prog1 ;
-INTEGER, PARAMETER :: max_val = 100, min_val = -50;
-RAEL, PARAMETER :: pi = 3.1415, e = 2.71828, c = 2e-6;
-
-INTEGER :: contador = , acumulador;
-REAL :: promedio, total = 0.0;
-CHARCTER(10) :: mensaje1 = Hola, mensaje2 = 'Mundo';
+PROGRAM errores_semanticos_retorno ;
+    INTEGER :: resultado = 0;
 
     INTERFACE
+        FUNCTION CalculoIncompleto(a)
+            INTEGER :: CalculoIncompleto;
+            INTEGER, INTENT(IN) a;
+        END FUNCTION CalculoIncompleto
 
-        SUBROUTINE ImprimirMensaje(texto)
-            CHARACTER(10), INTENT(IN) texto;
-        END SUBROUTINE ImprimirMensaje
-
-        FUNCTION Sumar(a, b)
-            INTEGER :: Sumar;
-            INTGER, INTENT(IN) a;
-            INTEGER, INTENT(IN) b;
-        END FUNCTION Sumar
-
+        FUNCTION CalculoDesordenado(a)
+            INTEGER :: CalculoDesordenado;
+            INTEGER, INTENT(IN) a;
+        END FUNCTION CalculoDesordenado
     END INTERFACE
 
-    contador = contador + 1;
-    total = total + 45.6;
-    CALL ImprimirMensaje('Bienvenido');
-    promedio = total / 2.0;
+    resultado = CalculoIncompleto(5);
+    resultado = CalculoDesordenado(5);
 
-END PROGRAM prog1
+END PROGRAM errores_semanticos_retorno
 
-SUBROUTINE ImprimirMensaje(texto)
-    CHRACTR(10), INTENT(IN) texto;
-    CALL MostrarEnPantalla(texto);
-END SUBROUTINE ImprimirMensaje
-
-FUNCTION Sumar(a, b)
-    INTEGER :: Sumar;
+! 1. ERROR: La funcion termina sin asignar valor a CalculoIncompleto
+FUNCTION CalculoIncompleto(a)
+    INTEGER :: CalculoIncompleto;
     INTEGER, INTENT(IN) a;
-    INTEGER, INTENT(IN) b;
+    INTEGER :: temporal = 0;
 
-    INTGER :: suma;
-    suma = a + b;
-    Sumar = suma;
-END FUNCTION Sumar
+    temporal = a * 10;
+    ! Se nos olvido hacer la asignacion de retorno
+END FUNCTION CalculoIncompleto
+
+! 2. ERROR: Se asigna el retorno, pero NO es la ultima sentencia
+FUNCTION CalculoDesordenado(a)
+    INTEGER :: CalculoDesordenado;
+    INTEGER, INTENT(IN) a;
+    INTEGER :: temporal = 0;
+
+    ! Hacemos la asignacion de retorno demasiado pronto
+    CalculoDesordenado = a * 2;
+
+    ! Y despues ejecutamos otra cosa (ilegal segun tu validacion)
+    temporal = temporal + 1;
+END FUNCTION CalculoDesordenado

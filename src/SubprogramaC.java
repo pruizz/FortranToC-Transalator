@@ -49,19 +49,6 @@ public class SubprogramaC extends ComponenteC {
         StringBuilder sb = new StringBuilder();
         String tab = ComponenteC.tab(nivel);
 
-        if (this.tipoRetorno != null && !this.tipoRetorno.equalsIgnoreCase("void")) {
-            for (int i = this.sentencias.size() - 1; i >= 0; i--) {
-                SentenciaC s = this.sentencias.get(i);
-                if (s instanceof AsignacionC) {
-                    AsignacionC asig = (AsignacionC) s;
-                    if (asig.getVariable().equalsIgnoreCase(this.nombre)) {
-                        asig.setEsReturn(true);
-                        break;
-                    }
-                }
-            }
-        }
-
         String tCabecera = this.tipoRetorno;
         if (tCabecera != null && tCabecera.startsWith("char")) {
             tCabecera = "char";
@@ -97,6 +84,22 @@ public class SubprogramaC extends ComponenteC {
             if (p.getNombre().equalsIgnoreCase(nombreVar)) {
                 String m = p.getModo();
                 return "OUT".equalsIgnoreCase(m) || "INOUT".equalsIgnoreCase(m);
+            }
+        }
+        return false;
+    }
+
+    public boolean validarRetornoEstricto() {
+        int numSentencias = this.sentencias.size();
+
+        if (numSentencias > 0) {
+            SentenciaC ultima = this.sentencias.get(numSentencias - 1);
+            if (ultima instanceof AsignacionC) {
+                AsignacionC asig = (AsignacionC) ultima;
+                if (asig.getVariable().equalsIgnoreCase(this.nombre)) {
+                    asig.setEsReturn(true);
+                    return true;
+                }
             }
         }
         return false;

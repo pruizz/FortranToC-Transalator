@@ -988,7 +988,6 @@ public class TranslatorParser extends Parser {
 				          } else {
 				              contenido = contenido.replace("\"\"", "\"");
 				          }
-				          // 2. Escapar comillas dobles y añadir las comillas de C
 				          contenido = contenido.replace("\"", "\\\"");
 				          ((SimpvalueContext)_localctx).val =  "\"" + contenido + "\"";
 				      
@@ -2520,10 +2519,11 @@ public class TranslatorParser extends Parser {
 				((FactorContext)_localctx).fp = factor_prime();
 
 				             String prefix = (((FactorContext)_localctx).id!=null?((FactorContext)_localctx).id.getText():null);
-				             if (((FactorContext)_localctx).fp.val.isEmpty() && esParametroReferencia((((FactorContext)_localctx).id!=null?((FactorContext)_localctx).id.getText():null))) {
-				                 prefix = "*" + prefix;
+				             String fpStr = (((FactorContext)_localctx).fp.val == null) ? "" : ((FactorContext)_localctx).fp.val;
+				             if (fpStr.isEmpty() && esParametroReferencia((((FactorContext)_localctx).id!=null?((FactorContext)_localctx).id.getText():null))) {
+				                prefix = "*" + prefix;
 				             }
-				             ((FactorContext)_localctx).val =  prefix + ((FactorContext)_localctx).fp.val;
+				             ((FactorContext)_localctx).val =  prefix + fpStr;
 				         
 				}
 				break;
@@ -3055,7 +3055,7 @@ public class TranslatorParser extends Parser {
 			((CodprocContext)_localctx).id1 = match(IDENT);
 
 			          ((CodprocContext)_localctx).sub =  new SubprogramaC((((CodprocContext)_localctx).id1!=null?((CodprocContext)_localctx).id1.getText():null), "void");
-			          this.subprogramaActual = _localctx.sub; // nos guardmaos el subprgrama actual que estamos reconociendo asi podremso identificar los parametros de entrad y salida
+			          this.subprogramaActual = _localctx.sub; // nos guardamos el subprgrama actual que estamos reconociendo asi podremos identificar los parametros de entrada y salida
 			      
 			setState(451);
 			formal_paramlist(_localctx.sub);
@@ -3074,7 +3074,7 @@ public class TranslatorParser extends Parser {
 
 			        if (!(((CodprocContext)_localctx).id1!=null?((CodprocContext)_localctx).id1.getText():null).equals((((CodprocContext)_localctx).id2!=null?((CodprocContext)_localctx).id2.getText():null))) {
 			            notifyErrorListeners(((CodprocContext)_localctx).id2, "Error Semántico: El nombre en END SUBROUTINE no coincide con el de la cabecera.", null);
-			                    }
+			        }
 			      
 			}
 		}
@@ -3327,7 +3327,13 @@ public class TranslatorParser extends Parser {
 				setState(491);
 				((Fun_body_primeContext)_localctx).id2 = match(IDENT);
 
-				        if (!_localctx.fun.getNombre().equals((((Fun_body_primeContext)_localctx).id2!=null?((Fun_body_primeContext)_localctx).id2.getText():null))) { notifyErrorListeners(((Fun_body_primeContext)_localctx).id2, "Error Semántico: El nombre del END FUNCTION no coincide.", null); }
+				        if (!_localctx.fun.getNombre().equals((((Fun_body_primeContext)_localctx).id2!=null?((Fun_body_primeContext)_localctx).id2.getText():null))) {
+				            notifyErrorListeners(((Fun_body_primeContext)_localctx).id2, "Error Semántico: El nombre del END FUNCTION no coincide.", null);
+				        }
+
+				        if (!_localctx.fun.validarRetornoEstricto()) {
+				            notifyErrorListeners(((Fun_body_primeContext)_localctx).id2, "Error Semántico: La última sentencia de la función '" + _localctx.fun.getNombre() + "' debe ser la asignación de su valor de retorno.", null);
+				        }
 				     
 				}
 				break;
@@ -4398,7 +4404,14 @@ public class TranslatorParser extends Parser {
 				match(T__16);
 				setState(637);
 				((Etiquetas_tailContext)_localctx).etp = etiquetas_tail_prime();
-				 if (((Etiquetas_tailContext)_localctx).etp.val.isEmpty()) { ((Etiquetas_tailContext)_localctx).val =  "case > " + _localctx.sHeredado + ":"; } else { ((Etiquetas_tailContext)_localctx).val =  "case " + _localctx.sHeredado + " to " + ((Etiquetas_tailContext)_localctx).etp.val + ":"; } 
+
+				        String etpStr = (((Etiquetas_tailContext)_localctx).etp.val == null) ? "" : ((Etiquetas_tailContext)_localctx).etp.val;
+				        if (etpStr.isEmpty()) {
+				            ((Etiquetas_tailContext)_localctx).val =  "case > " + _localctx.sHeredado + ":";
+				        } else {
+				            ((Etiquetas_tailContext)_localctx).val =  "case " + _localctx.sHeredado + " to " + etpStr + ":";
+				        }
+				    
 				}
 				break;
 			default:
