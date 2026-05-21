@@ -15,13 +15,11 @@ public class VariableC extends ComponenteC {
 
         String tipo = tipoBase;
         String dim = "";
-        // Truco: Si el tipo es char[10], separamos el char por un lado y el [10] por otro
         if (tipoBase != null && tipoBase.startsWith("char[")) {
             tipo = "char";
             dim = tipoBase.substring(4);
         }
 
-        // Lo imprimimos en orden: char nombre[10]
         sb.append(ComponenteC.tab(nivel)).append(tipo).append(" ").append(nombre).append(dim);
 
         if (valorInicial != null && !valorInicial.isEmpty()) {

@@ -18,24 +18,24 @@ public class ProgramaC extends ComponenteC {
     @Override
     public String generarCodigo(int nivel) {
         StringBuilder sb = new StringBuilder();
-        // 1. Constantes globales (#define)
+        // Primero las constantes #define
         for (ConstanteC c : constantes) {
             sb.append(c.generarCodigo(0)).append("\n");
         }
         if (!constantes.isEmpty()) sb.append("\n");
 
-        // 2. Prototipos de funciones
+        // Luego las interfaces
         for (SubprogramaC p : interfaces) {
             sb.append(p.generarCodigoCabecera()).append(";\n");
         }
         if (!interfaces.isEmpty()) sb.append("\n");
 
-        // 3. Implementaciones
+        // Ponemos las implementaciones
         for (SubprogramaC impl : implementaciones) {
             sb.append(impl.generarCodigo(0)).append("\n\n");
         }
 
-        // 4. MAIN
+        //Por ultimo se crea el main
         sb.append("void main (void) {\n");
         for (VariableC v : variablesMain) {
             sb.append(v.generarCodigo(1)).append("\n");

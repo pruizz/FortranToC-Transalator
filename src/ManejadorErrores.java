@@ -14,10 +14,8 @@ public class ManejadorErrores extends BaseErrorListener {
 
         if (msg.startsWith("Error Semántico")) {
             causa = "Error Semántico";
-            // Quitamos la etiqueta inicial para que el "Detalle" quede limpio
             msg = msg.replace("Error Semántico: ", "");
         }
-        // -------------------------------------------------------------
         else if (msg.contains("mismatched input")) causa = "Símbolo inesperado";
         else if (msg.contains("no viable alternative")) causa = "Estructura incompleta";
         else if (msg.contains("token recognition error")) causa = "Carácter no válido";

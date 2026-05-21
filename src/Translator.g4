@@ -82,7 +82,6 @@ simpvalue returns [String val]
           } else {
               contenido = contenido.replace("\"\"", "\"");
           }
-          // 2. Escapar comillas dobles y añadir las comillas de C
           contenido = contenido.replace("\"", "\\\"");
           $val = "\"" + contenido + "\"";
       }
@@ -250,7 +249,7 @@ codproc returns [SubprogramaC sub]
     : SUBROUTINE id1=IDENT
       {
           $sub = new SubprogramaC($id1.text, "void");
-          this.subprogramaActual = $sub; // nos guardmaos el subprgrama actual que estamos reconociendo asi podremso identificar los parametros de entrad y salida
+          this.subprogramaActual = $sub; // nos guardamos el subprgrama actual que estamos reconociendo asi podremos identificar los parametros de entrada y salida
       }
       formal_paramlist[$sub]
       dec_s_paramlist[$sub]
@@ -260,7 +259,7 @@ codproc returns [SubprogramaC sub]
       {
         if (!$id1.text.equals($id2.text)) {
             notifyErrorListeners($id2, "Error Semántico: El nombre en END SUBROUTINE no coincide con el de la cabecera.", null);
-                    }
+        }
       }
     ;
 
