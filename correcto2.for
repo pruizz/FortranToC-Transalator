@@ -1,57 +1,70 @@
-PROGRAM termostato_industrial ;
-! --- Declaraciones obligatorias ---
-REAL, PARAMETER :: temp_max = 120.5, temp_critica = 150.0;
-INTEGER, PARAMETER :: modo_auto = z'0A', modo_manual = z'0B';
+PROGRAM modulo_aritmetico_extenso;
+    INTEGER, PARAMETER :: LIMITE_CICLOS = 10, MULTIPLICADOR = b'1010';
+    REAL, PARAMETER :: PI_COMPLETO = 3.141592, GRAVEDAD_TIERRA = 9.806;
+    CHARACTER(2) :: ID_SISTEMA = 'A1';
 
-REAL :: temperatura_actual = 25.0, presion = 1.0;
-INTEGER :: estado_sistema = 0, ciclos = 0;
-CHARACTER(15) :: estado_msg = 'INICIANDO';
+    INTEGER :: iterador_bucle = 0, total_iteraciones = 0;
+    INTEGER :: valor_inicial = 5, resultado_final = 0;
+    REAL :: radio_calculo = 2.5, altura_calculo = 10.0;
+    REAL :: area_acumulada = 0.0, volumen_acumulado = 0.0;
 
     INTERFACE
-        SUBROUTINE AlertaSeguridad(codigo, nivel)
-            INTEGER, INTENT(IN) codigo;
-            CHARACTER(15), INTENT(IN) nivel;
-        END SUBROUTINE AlertaSeguridad
+        SUBROUTINE ProcesarGeometria(r, h, area, vol, ejecuciones)
+            REAL, INTENT(IN) r;
+            REAL, INTENT(IN) h;
+            REAL, INTENT(OUT) area;
+            REAL, INTENT(OUT) vol;
+            INTEGER, INTENT(INOUT) ejecuciones;
+        END SUBROUTINE ProcesarGeometria
 
-        FUNCTION CalcularPresion(t)
-            REAL :: CalcularPresion;
-            REAL, INTENT(IN) t;
-        END FUNCTION CalcularPresion
+        FUNCTION CalcularAjusteLineal(base_val, factor)
+            INTEGER :: CalcularAjusteLineal;
+            INTEGER, INTENT(IN) base_val;
+            INTEGER, INTENT(IN) factor;
+        END FUNCTION CalcularAjusteLineal
     END INTERFACE
 
-    ! --- Lógica de control ---
-    ciclos = ciclos + 1;
-    presion = CalcularPresion(temperatura_actual);
+    valor_inicial = valor_inicial * MULTIPLICADOR + 2;
+    radio_calculo = radio_calculo + 0.5;
 
-    ! Prueba de IF-THEN-ELSE y operadores lógicos
-    IF ( temperatura_actual > temp_max .AND. presion > 2.5 ) THEN
-        estado_sistema = 1;
-        estado_msg = 'PELIGRO';
-        CALL AlertaSeguridad(estado_sistema, estado_msg);
-    ELSE
-        estado_sistema = 0;
-        estado_msg = 'NORMAL';
-    ENDIF
-
-    ! Uso de bases opcionales y IF simple
-    IF ( estado_sistema == b'0' ) temperatura_actual = temperatura_actual + 5.0;
-
-    ! Bucle de enfriamiento
-    DO WHILE ( temperatura_actual > 30.0 .OR. ciclos < 100 )
-        temperatura_actual = temperatura_actual - 0.5;
-        ciclos = ciclos + 1;
+    DO iterador_bucle = 1, LIMITE_CICLOS, 1
+        CALL ProcesarGeometria(radio_calculo, altura_calculo, area_acumulada, volumen_acumulado, total_iteraciones);
+        radio_calculo = radio_calculo + 0.1;
+        altura_calculo = altura_calculo - 0.2;
     ENDDO
 
-END PROGRAM termostato_industrial
+    resultado_final = CalcularAjusteLineal(valor_inicial, total_iteraciones);
+    resultado_final = resultado_final + b'11';
 
-SUBROUTINE AlertaSeguridad(codigo, nivel)
-    INTEGER, INTENT(IN) codigo;
-    CHARACTER(15), INTENT(IN) nivel;
-    CALL RegistroLog(codigo);
-END SUBROUTINE AlertaSeguridad
+END PROGRAM modulo_aritmetico_extenso
 
-FUNCTION CalcularPresion(t)
-    REAL :: CalcularPresion;
-    REAL, INTENT(IN) t;
-    CalcularPresion = t * 0.015;
-END FUNCTION CalcularPresion
+
+SUBROUTINE ProcesarGeometria(r, h, area, vol, ejecuciones)
+    REAL, INTENT(IN) r;
+    REAL, INTENT(IN) h;
+    REAL, INTENT(OUT) area;
+    REAL, INTENT(OUT) vol;
+    INTEGER, INTENT(INOUT) ejecuciones;
+    REAL :: calculo_temporal = 0.0;
+
+    calculo_temporal = r * r;
+    area = PI_COMPLETO * calculo_temporal;
+    vol = area * h;
+    ejecuciones = ejecuciones + 1;
+    calculo_temporal = vol * GRAVEDAD_TIERRA;
+    vol = vol + 0.01;
+END SUBROUTINE ProcesarGeometria
+
+FUNCTION CalcularAjusteLineal(base_val, factor)
+    INTEGER :: CalcularAjusteLineal;
+    INTEGER, INTENT(IN) base_val;
+    INTEGER, INTENT(IN) factor;
+    INTEGER :: temporal_suma = 0;
+
+    temporal_suma = base_val * factor;
+    temporal_suma = temporal_suma + 1;
+    temporal_suma = temporal_suma + 2;
+    temporal_suma = temporal_suma + 3;
+
+    CalcularAjusteLineal = temporal_suma;
+END FUNCTION CalcularAjusteLineal

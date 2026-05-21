@@ -1,43 +1,50 @@
-#define temp_max 120.5
-#define temp_critica 150.0
-#define modo_auto 0x0A
-#define modo_manual 0x0B
+#define LIMITE_CICLOS 10
+#define MULTIPLICADOR 0b1010
+#define PI_COMPLETO 3.141592
+#define GRAVEDAD_TIERRA 9.806
 
-void AlertaSeguridad(int codigo, char nivel[]);
-float CalcularPresion(float t);
+void ProcesarGeometria(float r, float h, float * area, float * vol, int * ejecuciones);
+int CalcularAjusteLineal(int base_val, int factor);
 
-void AlertaSeguridad(int codigo, char nivel[]) {
-    RegistroLog(codigo);
+void ProcesarGeometria(float r, float h, float * area, float * vol, int * ejecuciones) {
+    float calculo_temporal = 0.0;
+    calculo_temporal = r * r;
+    *area = PI_COMPLETO * calculo_temporal;
+    *vol = *area * h;
+    *ejecuciones = *ejecuciones + 1;
+    calculo_temporal = *vol * GRAVEDAD_TIERRA;
+    *vol = *vol + 0.01;
 }
 
 
-float CalcularPresion(float t) {
-    return t * 0.015;
+int CalcularAjusteLineal(int base_val, int factor) {
+    int temporal_suma = 0;
+    temporal_suma = base_val * factor;
+    temporal_suma = temporal_suma + 1;
+    temporal_suma = temporal_suma + 2;
+    temporal_suma = temporal_suma + 3;
+    return temporal_suma;
 }
 
 
 void main (void) {
-    float temperatura_actual = 25.0;
-    float presion = 1.0;
-    int estado_sistema = 0;
-    int ciclos = 0;
-    char estado_msg[15] = "INICIANDO";
+    char ID_SISTEMA[2] = "A1";
+    int iterador_bucle = 0;
+    int total_iteraciones = 0;
+    int valor_inicial = 5;
+    int resultado_final = 0;
+    float radio_calculo = 2.5;
+    float altura_calculo = 10.0;
+    float area_acumulada = 0.0;
+    float volumen_acumulado = 0.0;
 
-    ciclos = ciclos + 1;
-    presion = CalcularPresion(temperatura_actual);
-    if (temperatura_actual > temp_max && presion > 2.5) {
-        estado_sistema = 1;
-        estado_msg = "PELIGRO";
-        AlertaSeguridad(estado_sistema, estado_msg);
-    } else {
-        estado_sistema = 0;
-        estado_msg = "NORMAL";
+    valor_inicial = valor_inicial * MULTIPLICADOR + 2;
+    radio_calculo = radio_calculo + 0.5;
+    for(iterador_bucle=1; iterador_bucle!=LIMITE_CICLOS; iterador_bucle=iterador_bucle+1) {
+        ProcesarGeometria(radio_calculo, altura_calculo, &area_acumulada, &volumen_acumulado, &total_iteraciones);
+        radio_calculo = radio_calculo + 0.1;
+        altura_calculo = altura_calculo - 0.2;
     }
-    if (estado_sistema == 0b0) {
-        temperatura_actual = temperatura_actual + 5.0;
-    }
-    while (temperatura_actual > 30.0 || ciclos < 100) {
-        temperatura_actual = temperatura_actual - 0.5;
-        ciclos = ciclos + 1;
-    }
+    resultado_final = CalcularAjusteLineal(valor_inicial, total_iteraciones);
+    resultado_final = resultado_final + 0b11;
 }
