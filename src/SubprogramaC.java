@@ -69,9 +69,13 @@ public class SubprogramaC extends ComponenteC {
 
         sb.append(tab).append(tCabecera).append(" ").append(this.nombre).append("(");
 
-        for (int i = 0; i < parametros.size(); i++) {
-            sb.append(parametros.get(i).generarCodigo(0));
-            if (i < parametros.size() - 1) sb.append(", ");
+        if (parametros.isEmpty()) {
+            sb.append("void");
+        } else {
+            for (int i = 0; i < parametros.size(); i++) {
+                sb.append(parametros.get(i).generarCodigo(0));
+                if (i < parametros.size() - 1) sb.append(", ");
+            }
         }
         sb.append(") {\n");
 

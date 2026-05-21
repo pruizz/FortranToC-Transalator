@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-
 #define max_val 100
 #define min_val -50
 #define pi 3.1415
@@ -14,11 +11,13 @@ void ImprimirMensaje(char texto[]) {
     MostrarEnPantalla(texto);
 }
 
+
 int Sumar(int a, int b) {
     int suma;
     suma = a + b;
     return suma;
 }
+
 
 void main (void) {
     int contador = 0;
@@ -28,7 +27,7 @@ void main (void) {
     char mensaje1[10] = "Hola";
     char mensaje2[10] = "Mundo";
     int base_bin = 0b011;
-    int base_oct = 00740;
+    int base_oct = 0o740;
     int base_hex = 0xA34;
     int i = 0;
     int opcion = 2;
@@ -43,7 +42,7 @@ void main (void) {
     if (total >= 100.0 || !0) {
         ImprimirMensaje("Mayor");
     }
-    if (base_bin == 3 == 1) {
+    if (base_bin == 3 !^ 1) {
         acumulador = 1;
     } else {
         acumulador = 0;
@@ -59,8 +58,8 @@ void main (void) {
             acumulador = 1;
             break;
         case 2:
-case 3:
-case 4:
+        case 3:
+        case 4:
             acumulador = 2;
             break;
         case 10 to 20:
@@ -74,6 +73,6 @@ case 4:
             break;
         default:
             acumulador = 0;
-            break;
     }
+
 }

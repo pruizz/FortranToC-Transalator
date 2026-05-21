@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-
 #define temp_max 120.5
 #define temp_critica 150.0
 #define modo_auto 0x0A
@@ -13,9 +10,11 @@ void AlertaSeguridad(int codigo, char nivel[]) {
     RegistroLog(codigo);
 }
 
+
 float CalcularPresion(float t) {
     return t * 0.015;
 }
+
 
 void main (void) {
     float temperatura_actual = 25.0;

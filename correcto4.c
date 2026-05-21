@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-
 #define frecuencia 44100
 #define ganancia 1.25
 
@@ -13,9 +10,11 @@ float AplicarFiltro(float val, float factor) {
     return aux;
 }
 
+
 void NotificarFin(void) {
     muestra_id = 0;
 }
+
 
 void main (void) {
     int muestra_id = 0;
@@ -33,10 +32,10 @@ void main (void) {
                 break;
             default:
                 categoria = 0;
-                break;
         }
+
     }
-    if (categoria == 4 == 1) {
+    if (categoria == 4 !^ 1) {
         NotificarFin();
     }
 }

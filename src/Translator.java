@@ -1,4 +1,6 @@
 import org.antlr.v4.runtime.*;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -26,12 +28,23 @@ public class Translator {
             anasint.removeErrorListeners();
             anasint.addErrorListener(manejador);
 
-            // Ejecutamos la regla prg y guardamos el código C que nos devuelve
+
             String codigoGenerado = anasint.prg().codigoC;
 
-            // Si el código no es nulo (es decir, si no hubo errores que pararan la traducción)
+            // Si el código no es nulo y no hay errores de sintaxis
             if (anasint.getNumberOfSyntaxErrors() == 0 && codigoGenerado != null) {
-                String archivoSalida = archivoEntrada.replaceAll("(?i)\\.for$", ".c");
+
+                File inFile = new File(archivoEntrada);
+                String nombreArchivo = inFile.getName();
+                String directorio = inFile.getParent();
+
+
+                int dotIndex = nombreArchivo.lastIndexOf('.');
+                String baseName = (dotIndex == -1) ? nombreArchivo : nombreArchivo.substring(0, dotIndex);
+                String outFileName = baseName + ".c";
+
+                File outFile = (directorio != null) ? new File(directorio, outFileName) : new File(outFileName);
+                String archivoSalida = outFile.getPath();
 
                 try (PrintWriter out = new PrintWriter(archivoSalida)) {
                     out.print(codigoGenerado);
@@ -44,7 +57,7 @@ public class Translator {
             }
 
         } catch (IOException e) {
-            System.err.println("IO Error: " + e.getMessage());
+            System.err.println("IO Error: No se pudo leer el archivo. " + e.getMessage());
         } catch (Exception e) {
             System.err.println("Error inesperado: " + e.getMessage());
         }

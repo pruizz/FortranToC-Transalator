@@ -12,18 +12,16 @@ public class CasoC extends ComponenteC {
     @Override
     public String generarCodigo(int nivel) {
         StringBuilder sb = new StringBuilder();
+        String tab = ComponenteC.tab(nivel);
+        String tabCuerpo = ComponenteC.tab(nivel + 1);
 
-        // La etiqueta del caso (ej. case 1: o case 1 to 5:)
-        sb.append(ComponenteC.tab(nivel)).append(etiquetas).append("\n");
+        String etiquetasIndentadas = this.etiquetas.replace("\n", "\n" + tab);
+        sb.append(tab).append(etiquetasIndentadas).append("\n");
 
-        // Las sentencias de dentro, con un nivel más de tabulación
         for (SentenciaC s : sentencias) {
             sb.append(s.generarCodigo(nivel + 1)).append("\n");
         }
-
-        // El enunciado exige que siempre termine en break;
-        sb.append(ComponenteC.tab(nivel + 1)).append("break;\n");
-
+        sb.append(tabCuerpo).append("break;\n");
         return sb.toString();
     }
 
